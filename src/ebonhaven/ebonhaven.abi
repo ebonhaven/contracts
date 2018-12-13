@@ -1,0 +1,499 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Dec 10 09:52:26 2018",
+    "version": "eosio::abi/1.1",
+    "structs": [
+        {
+            "name": "account",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "total_characters",
+                    "type": "uint8"
+                },
+                {
+                    "name": "characters",
+                    "type": "character[]"
+                },
+                {
+                    "name": "inventory",
+                    "type": "item[]"
+                }
+            ]
+        },
+        {
+            "name": "basestat",
+            "base": "",
+            "fields": [
+                {
+                    "name": "profession_id",
+                    "type": "uint8"
+                },
+                {
+                    "name": "base_hp",
+                    "type": "uint8"
+                },
+                {
+                    "name": "hp_increase_by_level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "base_stats",
+                    "type": "stats"
+                },
+                {
+                    "name": "stat_increase_by_level",
+                    "type": "stats"
+                }
+            ]
+        },
+        {
+            "name": "character",
+            "base": "",
+            "fields": [
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_name",
+                    "type": "string"
+                },
+                {
+                    "name": "gender",
+                    "type": "uint8"
+                },
+                {
+                    "name": "profession",
+                    "type": "uint8"
+                },
+                {
+                    "name": "race",
+                    "type": "uint8"
+                },
+                {
+                    "name": "level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "experience",
+                    "type": "uint32"
+                },
+                {
+                    "name": "position",
+                    "type": "position"
+                },
+                {
+                    "name": "in_combat",
+                    "type": "uint8"
+                },
+                {
+                    "name": "hp",
+                    "type": "uint64"
+                },
+                {
+                    "name": "max_hp",
+                    "type": "uint64"
+                },
+                {
+                    "name": "stats",
+                    "type": "stats"
+                },
+                {
+                    "name": "equipped",
+                    "type": "equipment"
+                }
+            ]
+        },
+        {
+            "name": "combat",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "encounter_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "user_decision",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "delcharacter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "equipment",
+            "base": "",
+            "fields": [
+                {
+                    "name": "head",
+                    "type": "uint64"
+                },
+                {
+                    "name": "outfit",
+                    "type": "uint64"
+                },
+                {
+                    "name": "weapon",
+                    "type": "uint64"
+                },
+                {
+                    "name": "jewelry",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "globals",
+            "base": "",
+            "fields": [
+                {
+                    "name": "key",
+                    "type": "uint64"
+                },
+                {
+                    "name": "seed",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "item",
+            "base": "",
+            "fields": [
+                {
+                    "name": "item_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "item_name",
+                    "type": "string"
+                },
+                {
+                    "name": "item_description",
+                    "type": "string"
+                },
+                {
+                    "name": "bind_on",
+                    "type": "uint8"
+                },
+                {
+                    "name": "stack_quantity",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_stack_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "is_consumable",
+                    "type": "uint8"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "equipped_by",
+                    "type": "uint64"
+                },
+                {
+                    "name": "stats",
+                    "type": "stats"
+                },
+                {
+                    "name": "creator_name",
+                    "type": "string"
+                },
+                {
+                    "name": "creator_account",
+                    "type": "string"
+                },
+                {
+                    "name": "quality",
+                    "type": "uint8"
+                },
+                {
+                    "name": "slot",
+                    "type": "uint8"
+                },
+                {
+                    "name": "profession_lock",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "move",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "newcharacter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_name",
+                    "type": "string"
+                },
+                {
+                    "name": "gender",
+                    "type": "uint8"
+                },
+                {
+                    "name": "profession",
+                    "type": "uint8"
+                },
+                {
+                    "name": "race",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "newitem",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "item_name",
+                    "type": "string"
+                },
+                {
+                    "name": "item_description",
+                    "type": "string"
+                },
+                {
+                    "name": "bind_on",
+                    "type": "uint8"
+                },
+                {
+                    "name": "stack_quantity",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_stack_size",
+                    "type": "uint32"
+                },
+                {
+                    "name": "is_consumable",
+                    "type": "uint8"
+                },
+                {
+                    "name": "quality",
+                    "type": "uint8"
+                },
+                {
+                    "name": "slot",
+                    "type": "uint8"
+                },
+                {
+                    "name": "profession_lock",
+                    "type": "uint8"
+                },
+                {
+                    "name": "stats",
+                    "type": "uint32[]"
+                }
+            ]
+        },
+        {
+            "name": "position",
+            "base": "",
+            "fields": [
+                {
+                    "name": "world",
+                    "type": "uint8"
+                },
+                {
+                    "name": "zone",
+                    "type": "uint8"
+                },
+                {
+                    "name": "x",
+                    "type": "uint8"
+                },
+                {
+                    "name": "y",
+                    "type": "uint8"
+                },
+                {
+                    "name": "orientation",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "stats",
+            "base": "",
+            "fields": [
+                {
+                    "name": "stamina",
+                    "type": "uint32"
+                },
+                {
+                    "name": "regen",
+                    "type": "uint32"
+                },
+                {
+                    "name": "perception",
+                    "type": "uint32"
+                },
+                {
+                    "name": "skill",
+                    "type": "uint32"
+                },
+                {
+                    "name": "luck",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "upsertstats",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "profession_id",
+                    "type": "uint8"
+                },
+                {
+                    "name": "base_hp",
+                    "type": "uint8"
+                },
+                {
+                    "name": "hp_increase_by_level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "stats",
+                    "type": "uint8[]"
+                },
+                {
+                    "name": "stat_increase_by_level",
+                    "type": "uint8[]"
+                }
+            ]
+        }
+    ],
+    "types": [],
+    "actions": [
+        {
+            "name": "combat",
+            "type": "combat",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "delcharacter",
+            "type": "delcharacter",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "move",
+            "type": "move",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "newcharacter",
+            "type": "newcharacter",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "newitem",
+            "type": "newitem",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertstats",
+            "type": "upsertstats",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "accounts",
+            "type": "account",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "basestats",
+            "type": "basestat",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "characters",
+            "type": "character",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "globals",
+            "type": "globals",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "items",
+            "type": "item",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "abi_extensions": []
+}
