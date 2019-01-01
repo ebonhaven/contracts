@@ -32,20 +32,7 @@ sleep 2s
 echo "=== unlock default wallet ==="
 cleos wallet unlock --password PW5Jy8pnfEXKQbWb4KNsCmbbA5Vdkt9D1rpYbbQWgBaeqhhbSZznJ
 
-# Add eosio.contracts repo
-echo "=== cloning and deploying token repo ==="
-git clone https://github.com/EOSIO/eosio.contracts data/eosio.contracts --branch v1.4.0 --single-branch
-cd "$ROOT/data/eosio.contracts/eosio.token"
-eosio-cpp -I include -o eosio.token.wasm src/eosio.token.cpp --abigen
-cleos create account eosio eosio.token EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
-cleos set contract eosio.token ../eosio.token --abi eosio.token.abi -p eosio.token@active
-cd $ROOT
-
 echo "=== start create accounts in blockchain ==="
 cleos create account eosio ebonhaven EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
 cleos create account eosio alice EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
 cleos create account eosio bob EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
-
-echo "=== issue tokens ==="
-cleos push action eosio.token issue '["alice", "100.0000 EBH", "initial"]' -p eosio@active
-cleos push action eosio.token issue '["bob", "100.0000 EBH", "initial"]' -p eosio@active

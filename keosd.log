@@ -1,6 +1,1 @@
 
-error 2018-12-10T22:14:28.647 thread-0  http_plugin.cpp:580           handle_exception     ] FC Exception encountered while processing wallet.unlock
-debug 2018-12-10T22:14:28.647 thread-0  http_plugin.cpp:581           handle_exception     ] Exception Details: 3120007 wallet_unlocked_exception: Already unlocked
-Wallet is already unlocked: default
-    {"w":"default"}
-    thread-0  wallet_manager.cpp:185 unlock

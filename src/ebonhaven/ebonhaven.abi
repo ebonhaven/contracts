@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Dec 10 09:52:26 2018",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Sat Dec 29 11:49:43 2018",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -11,16 +11,72 @@
                     "type": "name"
                 },
                 {
-                    "name": "total_characters",
-                    "type": "uint8"
+                    "name": "balance",
+                    "type": "asset"
                 },
                 {
                     "name": "characters",
-                    "type": "character[]"
+                    "type": "uint64[]"
                 },
                 {
                     "name": "inventory",
-                    "type": "item[]"
+                    "type": "uint64[]"
+                }
+            ]
+        },
+        {
+            "name": "attack",
+            "base": "",
+            "fields": [
+                {
+                    "name": "physical",
+                    "type": "uint32"
+                },
+                {
+                    "name": "spell",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "aura",
+            "base": "",
+            "fields": [
+                {
+                    "name": "aura_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "aura_description",
+                    "type": "string"
+                },
+                {
+                    "name": "has_charges",
+                    "type": "uint8"
+                },
+                {
+                    "name": "charges_remaining",
+                    "type": "uint8"
+                },
+                {
+                    "name": "turns_remaining",
+                    "type": "uint8"
+                },
+                {
+                    "name": "hp_delta",
+                    "type": "int32"
+                },
+                {
+                    "name": "stats_delta",
+                    "type": "stats"
+                },
+                {
+                    "name": "attack_delta",
+                    "type": "attack"
+                },
+                {
+                    "name": "defense_delta",
+                    "type": "defense"
                 }
             ]
         },
@@ -41,8 +97,24 @@
                     "type": "uint8"
                 },
                 {
+                    "name": "base_attack",
+                    "type": "attack"
+                },
+                {
+                    "name": "base_defense",
+                    "type": "defense"
+                },
+                {
                     "name": "base_stats",
                     "type": "stats"
+                },
+                {
+                    "name": "attack_increase_by_level",
+                    "type": "attack"
+                },
+                {
+                    "name": "defense_increase_by_level",
+                    "type": "defense"
                 },
                 {
                     "name": "stat_increase_by_level",
@@ -80,7 +152,7 @@
                 },
                 {
                     "name": "level",
-                    "type": "uint8"
+                    "type": "int32"
                 },
                 {
                     "name": "experience",
@@ -96,7 +168,7 @@
                 },
                 {
                     "name": "hp",
-                    "type": "uint64"
+                    "type": "int64"
                 },
                 {
                     "name": "max_hp",
@@ -107,8 +179,34 @@
                     "type": "stats"
                 },
                 {
+                    "name": "attack",
+                    "type": "attack"
+                },
+                {
+                    "name": "defense",
+                    "type": "defense"
+                },
+                {
                     "name": "equipped",
                     "type": "equipment"
+                }
+            ]
+        },
+        {
+            "name": "claimrewards",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "reward_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "item_ids",
+                    "type": "uint64[]"
                 }
             ]
         },
@@ -121,16 +219,26 @@
                     "type": "name"
                 },
                 {
-                    "name": "character_id",
-                    "type": "uint64"
-                },
-                {
                     "name": "encounter_id",
                     "type": "uint64"
                 },
                 {
                     "name": "user_decision",
                     "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "defense",
+            "base": "",
+            "fields": [
+                {
+                    "name": "physical",
+                    "type": "uint32"
+                },
+                {
+                    "name": "spell",
+                    "type": "uint32"
                 }
             ]
         },
@@ -145,6 +253,52 @@
                 {
                     "name": "character_id",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "delencounter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "encounter_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "delrewards",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "reward_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "encounter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "encounter_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "mobs",
+                    "type": "mob[]"
                 }
             ]
         },
@@ -181,6 +335,18 @@
                 {
                     "name": "seed",
                     "type": "uint32"
+                },
+                {
+                    "name": "supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "max_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "issuer",
+                    "type": "name"
                 }
             ]
         },
@@ -190,6 +356,10 @@
             "fields": [
                 {
                     "name": "item_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "parent_id",
                     "type": "uint64"
                 },
                 {
@@ -217,16 +387,12 @@
                     "type": "uint8"
                 },
                 {
+                    "name": "level_requirement",
+                    "type": "uint8"
+                },
+                {
                     "name": "owner",
                     "type": "name"
-                },
-                {
-                    "name": "equipped_by",
-                    "type": "uint64"
-                },
-                {
-                    "name": "stats",
-                    "type": "stats"
                 },
                 {
                     "name": "creator_name",
@@ -234,7 +400,11 @@
                 },
                 {
                     "name": "creator_account",
-                    "type": "string"
+                    "type": "name"
+                },
+                {
+                    "name": "created_at",
+                    "type": "uint32"
                 },
                 {
                     "name": "quality",
@@ -247,6 +417,86 @@
                 {
                     "name": "profession_lock",
                     "type": "uint8"
+                },
+                {
+                    "name": "aura",
+                    "type": "aura"
+                }
+            ]
+        },
+        {
+            "name": "mob",
+            "base": "",
+            "fields": [
+                {
+                    "name": "mob_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "mob_name",
+                    "type": "string"
+                },
+                {
+                    "name": "level",
+                    "type": "int32"
+                },
+                {
+                    "name": "mob_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "attack",
+                    "type": "uint16"
+                },
+                {
+                    "name": "defense",
+                    "type": "uint16"
+                },
+                {
+                    "name": "hp",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_hp",
+                    "type": "uint32"
+                },
+                {
+                    "name": "skill1",
+                    "type": "uint16"
+                },
+                {
+                    "name": "skill2",
+                    "type": "uint16"
+                },
+                {
+                    "name": "skill3",
+                    "type": "uint16"
+                },
+                {
+                    "name": "experience",
+                    "type": "uint32"
+                },
+                {
+                    "name": "worth",
+                    "type": "asset"
+                },
+                {
+                    "name": "drop",
+                    "type": "s_drop"
+                }
+            ]
+        },
+        {
+            "name": "mob_drop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "percentage",
+                    "type": "float_t"
+                },
+                {
+                    "name": "item_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -261,6 +511,16 @@
                 {
                     "name": "character_id",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "newaccount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
                 }
             ]
         },
@@ -291,12 +551,34 @@
             ]
         },
         {
+            "name": "newencounter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "mob_ids",
+                    "type": "uint64[]"
+                }
+            ]
+        },
+        {
             "name": "newitem",
             "base": "",
             "fields": [
                 {
                     "name": "user",
                     "type": "name"
+                },
+                {
+                    "name": "item_id",
+                    "type": "uint32"
                 },
                 {
                     "name": "item_name",
@@ -323,6 +605,10 @@
                     "type": "uint8"
                 },
                 {
+                    "name": "level_requirement",
+                    "type": "uint8"
+                },
+                {
                     "name": "quality",
                     "type": "uint8"
                 },
@@ -335,8 +621,8 @@
                     "type": "uint8"
                 },
                 {
-                    "name": "stats",
-                    "type": "uint32[]"
+                    "name": "aura_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -367,6 +653,60 @@
             ]
         },
         {
+            "name": "reward",
+            "base": "",
+            "fields": [
+                {
+                    "name": "reward_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "worth",
+                    "type": "asset"
+                },
+                {
+                    "name": "items",
+                    "type": "item[]"
+                }
+            ]
+        },
+        {
+            "name": "s_drop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "drop_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "drops",
+                    "type": "mob_drop[]"
+                }
+            ]
+        },
+        {
+            "name": "spawnitems",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "item_ids",
+                    "type": "uint64[]"
+                }
+            ]
+        },
+        {
             "name": "stats",
             "base": "",
             "fields": [
@@ -393,6 +733,218 @@
             ]
         },
         {
+            "name": "tokencreate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "maximum_supply",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "tokenissue",
+            "base": "",
+            "fields": [
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "tokenretire",
+            "base": "",
+            "fields": [
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "tokenreward",
+            "base": "",
+            "fields": [
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "tokenxfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "upsertaura",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "aura_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "aura_description",
+                    "type": "string"
+                },
+                {
+                    "name": "has_charges",
+                    "type": "uint8"
+                },
+                {
+                    "name": "charges_remaining",
+                    "type": "uint8"
+                },
+                {
+                    "name": "turns_remaining",
+                    "type": "uint8"
+                },
+                {
+                    "name": "hp_delta",
+                    "type": "int32"
+                },
+                {
+                    "name": "stats_delta",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "attack_delta",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "defense_delta",
+                    "type": "uint32[]"
+                }
+            ]
+        },
+        {
+            "name": "upsertdrop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "drop_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "drops",
+                    "type": "mob_drop[]"
+                }
+            ]
+        },
+        {
+            "name": "upsertmob",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "mob_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "mob_name",
+                    "type": "string"
+                },
+                {
+                    "name": "level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "mob_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "attack",
+                    "type": "uint16"
+                },
+                {
+                    "name": "defense",
+                    "type": "uint16"
+                },
+                {
+                    "name": "hp",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_hp",
+                    "type": "uint32"
+                },
+                {
+                    "name": "skill1",
+                    "type": "uint16"
+                },
+                {
+                    "name": "skill2",
+                    "type": "uint16"
+                },
+                {
+                    "name": "skill3",
+                    "type": "uint16"
+                },
+                {
+                    "name": "experience",
+                    "type": "uint32"
+                },
+                {
+                    "name": "worth",
+                    "type": "asset"
+                },
+                {
+                    "name": "drop_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "upsertstats",
             "base": "",
             "fields": [
@@ -413,18 +965,62 @@
                     "type": "uint8"
                 },
                 {
-                    "name": "stats",
-                    "type": "uint8[]"
+                    "name": "base_attack",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "base_defense",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "new_stats",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "attack_increase",
+                    "type": "uint32[]"
+                },
+                {
+                    "name": "defense_increase",
+                    "type": "uint32[]"
                 },
                 {
                     "name": "stat_increase_by_level",
-                    "type": "uint8[]"
+                    "type": "uint32[]"
+                }
+            ]
+        },
+        {
+            "name": "useitem",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "character_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "item_id",
+                    "type": "uint64"
                 }
             ]
         }
     ],
-    "types": [],
+    "types": [
+        {
+            "new_type_name": "float_t",
+            "type": "float32"
+        }
+    ],
     "actions": [
+        {
+            "name": "claimrewards",
+            "type": "claimrewards",
+            "ricardian_contract": ""
+        },
         {
             "name": "combat",
             "type": "combat",
@@ -436,8 +1032,23 @@
             "ricardian_contract": ""
         },
         {
+            "name": "delencounter",
+            "type": "delencounter",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "delrewards",
+            "type": "delrewards",
+            "ricardian_contract": ""
+        },
+        {
             "name": "move",
             "type": "move",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "newaccount",
+            "type": "newaccount",
             "ricardian_contract": ""
         },
         {
@@ -446,13 +1057,68 @@
             "ricardian_contract": ""
         },
         {
+            "name": "newencounter",
+            "type": "newencounter",
+            "ricardian_contract": ""
+        },
+        {
             "name": "newitem",
             "type": "newitem",
             "ricardian_contract": ""
         },
         {
+            "name": "spawnitems",
+            "type": "spawnitems",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tokencreate",
+            "type": "tokencreate",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tokenissue",
+            "type": "tokenissue",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tokenretire",
+            "type": "tokenretire",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tokenreward",
+            "type": "tokenreward",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tokenxfer",
+            "type": "tokenxfer",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertaura",
+            "type": "upsertaura",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertdrop",
+            "type": "upsertdrop",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertmob",
+            "type": "upsertmob",
+            "ricardian_contract": ""
+        },
+        {
             "name": "upsertstats",
             "type": "upsertstats",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "useitem",
+            "type": "useitem",
             "ricardian_contract": ""
         }
     ],
@@ -460,6 +1126,13 @@
         {
             "name": "accounts",
             "type": "account",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "auras",
+            "type": "aura",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -479,6 +1152,20 @@
             "key_types": []
         },
         {
+            "name": "drops",
+            "type": "s_drop",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "encounters",
+            "type": "encounter",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "globals",
             "type": "globals",
             "index_type": "i64",
@@ -488,6 +1175,20 @@
         {
             "name": "items",
             "type": "item",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "mobs",
+            "type": "mob",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "rewards",
+            "type": "reward",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

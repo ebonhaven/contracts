@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ebonhaven.hpp"
 
 using namespace eosio;
