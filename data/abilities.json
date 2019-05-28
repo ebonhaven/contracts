@@ -1,0 +1,34 @@
+{
+    "abilities": [
+        {
+            "ability_id": 1001,
+            "ability_name": "Seismic Slam",
+            "ability_description": "",
+            "ability_cost": "1.00 EBON",
+            "level": 1,
+            "profession_lock": 1,
+            "race_lock": 0,
+            "ability_data": "{\"attack\":{\"physical\":10}, \"target\":1, \"cooldown\":3}"
+        },
+        {
+            "ability_id": 2001,
+            "ability_name": "Mend Wounds",
+            "ability_description": "",
+            "ability_cost": "1.00 EBON",
+            "level": 1,
+            "profession_lock": 2,
+            "race_lock": 0,
+            "ability_data": "{\"hp_delta\":50, \"target\":1, \"cooldown\":3}"
+        },
+        {
+            "ability_id": 9001,
+            "ability_name": "Lionheart",
+            "ability_description": "",
+            "ability_cost": "1.00 EBON",
+            "level": 1,
+            "profession_lock": 0,
+            "race_lock": 1,
+            "ability_data": "{\"max_hp_delta\":50, \"hp_delta\":50, \"target\":1, \"cooldown\":3}"
+        }
+    ]
+}

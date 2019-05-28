@@ -1,0 +1,47 @@
+{
+    "endpoint": "http://127.0.0.1:8888",
+    "privateKeys": [
+        "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3",
+        "5KSVe3AYVmkVJ6qzksWRfw8E3HJACg4h87Wu9uHrzeN5LRPDQNr",
+        "5Hvik3xTfFhudTkm18wdYNKWdwP2ybGrL5Ev4W18KZ7ae8Kbosb"
+    ],
+    "contracts": [
+        {
+            "name": "ebonhavencom",
+            "location": ""
+        }
+    ],
+    "accounts": [
+        {
+            "name": "ebonhavencom",
+            "permissions": {
+                "owner": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7",
+                "active": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7"
+            }
+        },
+        {
+            "name": "alice",
+            "permissions": {
+                "owner": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+                "active": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+            },
+            "character": {
+                "gender": 1,
+                "profession": 1,
+                "race": 1
+            }
+        },
+        {
+            "name": "bob",
+            "permissions": {
+                "owner": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+                "active": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+            },
+            "character": {
+                "gender": 0,
+                "profession": 2,
+                "race": 2
+            }
+        }
+    ]
+}

@@ -1,0 +1,194 @@
+{
+    "basestats": [
+        {
+            "name": "rockhound",
+            "stats": {
+                "profession": 1,
+                "base_hp": 200,
+                "hp_increase": 12,
+                "base_attack": {
+                    "physical": 18,
+                    "spell": 12
+                },
+                "base_defense": {
+                    "physical": 18,
+                    "spell": 12
+                },
+                "attack_increase": {
+                    "physical": 4,
+                    "spell": 2
+                },
+                "defense_increase": {
+                    "physical": 4,
+                    "spell": 2
+                },
+                "base_stats": {
+                    "stamina": 7,
+                    "regen": 5,
+                    "perception": 10,
+                    "skill": 8,
+                    "luck": 5
+                },
+                "stats_increase": {
+                    "stamina": 2,
+                    "regen": 1,
+                    "perception": 3,
+                    "skill": 2,
+                    "luck": 1
+                }
+            }
+        },
+        {
+            "name": "survivalist",
+            "stats": {
+                "profession": 2,
+                "base_hp": 180,
+                "hp_increase": 10,
+                "base_attack": {
+                    "physical": 20,
+                    "spell": 10
+                },
+                "base_defense": {
+                    "physical": 15,
+                    "spell": 15
+                },
+                "attack_increase": {
+                    "physical": 5,
+                    "spell": 1
+                },
+                "defense_increase": {
+                    "physical": 5,
+                    "spell": 1
+                },
+                "base_stats": {
+                    "stamina": 5,
+                    "regen": 10,
+                    "perception": 7,
+                    "skill": 5,
+                    "luck": 8
+                },
+                "stats_increase": {
+                    "stamina": 1,
+                    "regen": 3,
+                    "perception": 2,
+                    "skill": 1,
+                    "luck": 2
+                }
+            }
+        },
+        {
+            "name": "alchemist",
+            "stats": {
+                "profession": 3,
+                "base_hp": 160,
+                "hp_increase": 8,
+                "base_attack": {
+                    "physical": 12,
+                    "spell": 18
+                },
+                "base_defense": {
+                    "physical": 18,
+                    "spell": 12
+                },
+                "attack_increase": {
+                    "physical": 3,
+                    "spell": 3
+                },
+                "defense_increase": {
+                    "physical": 3,
+                    "spell": 3
+                },
+                "base_stats": {
+                    "stamina": 4,
+                    "regen": 8,
+                    "perception": 8,
+                    "skill": 8,
+                    "luck": 7
+                },
+                "stats_increase": {
+                    "stamina": 1,
+                    "regen": 2,
+                    "perception": 2,
+                    "skill": 2,
+                    "luck": 2
+                }
+            }
+        },
+        {
+            "name": "conjuror",
+            "stats": {
+                "profession": 4,
+                "base_hp": 140,
+                "hp_increase": 8,
+                "base_attack": {
+                    "physical": 10,
+                    "spell": 20
+                },
+                "base_defense": {
+                    "physical": 10,
+                    "spell": 20
+                },
+                "attack_increase": {
+                    "physical": 1,
+                    "spell": 5
+                },
+                "defense_increase": {
+                    "physical": 1,
+                    "spell": 5
+                },
+                "base_stats": {
+                    "stamina": 5,
+                    "regen": 8,
+                    "perception": 7,
+                    "skill": 11,
+                    "luck": 4
+                },
+                "stats_increase": {
+                    "stamina": 1,
+                    "regen": 2,
+                    "perception": 2,
+                    "skill": 2,
+                    "luck": 2
+                }
+            }
+        },
+        {
+            "name": "metalsmith",
+            "stats": {
+                "profession": 5,
+                "base_hp": 220,
+                "hp_increase": 14,
+                "base_attack": {
+                    "physical": 16,
+                    "spell": 14
+                },
+                "base_defense": {
+                    "physical": 20,
+                    "spell": 10
+                },
+                "attack_increase": {
+                    "physical": 4,
+                    "spell": 2
+                },
+                "defense_increase": {
+                    "physical": 5,
+                    "spell": 1
+                },
+                "base_stats": {
+                    "stamina": 9,
+                    "regen": 4,
+                    "perception": 6,
+                    "skill": 9,
+                    "luck": 7
+                },
+                "stats_increase": {
+                    "stamina": 3,
+                    "regen": 2,
+                    "perception": 1,
+                    "skill": 2,
+                    "luck": 1
+                }
+            }
+        }
+    ]
+}

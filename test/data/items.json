@@ -1,0 +1,32 @@
+[
+    {
+        "item_id": 99901,
+        "item_name": "Light Armor Head [Test]",
+        "item_description": "",
+        "bind_status": 0,
+        "is_consumable": 0,
+        "level_requirement": 1,
+        "durability": 10,
+        "quality": 2,
+        "slot": 1,
+        "profession_lock": 0,
+        "item_type": 3,
+        "auras": [1100],
+        "effects": []
+    },
+    {
+        "item_id": 99902,
+        "item_name": "Health Potion [Test]",
+        "item_description": "",
+        "bind_status": 0,
+        "is_consumable": 1,
+        "level_requirement": 1,
+        "durability": 0,
+        "quality": 0,
+        "slot": 0,
+        "profession_lock": 0,
+        "item_type": 8,
+        "auras": [],
+        "effects": [1002]
+    }
+]
