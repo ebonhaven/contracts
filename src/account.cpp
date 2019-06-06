@@ -1,6 +1,6 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
-ACTION ebonhavencom::newaccount( name user )
+ACTION ebonhaven::newaccount( name user )
 {
   require_auth( user );
   accounts_index accounts_table(get_self(), user.value);

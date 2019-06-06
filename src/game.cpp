@@ -1,6 +1,12 @@
-#include <ebonhavencom.hpp>
+#define RANDOM_FACTOR 0.2
+#define ARMORED_FACTOR 0.15
+#define MAX_LEVEL 60
 
-ACTION ebonhavencom::move( name user, uint64_t character_id, position new_position) {
+#include <ebonhaven.hpp>
+
+using namespace std;
+
+ACTION ebonhaven::move( name user, uint64_t character_id, position new_position) {
   require_auth( user );
   
   characters_index characters(get_self(), user.value);
@@ -79,7 +85,7 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
   check(encounter.mobs[mob_idx].hp != 0, "mob is already dead");
 
   encounter.last_decision = combat_decision;
-  encounter.turn_counter += 1;
+  encounter.turn_counter++;
 
   bool mob_can_hit = true;
   bool player_can_hit = true;
@@ -123,8 +129,8 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
         break;
       case 6:
         print("\nRace Ability Chosen\n");
-        eosio_assert(character.abilities.raceability != 0, "No ability in ability slot 3");
-        ability = abilities.get(character.abilities.raceability, "Couldn't find ability");
+        check(character.abilities.racial != 0, "No ability in ability slot 3");
+        ability = abilities.get(character.abilities.racial, "Couldn't find ability");
         print("\nAbility: ", ability.ability_name);
     }
 
@@ -146,9 +152,13 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
       } else {
         mob_can_hit = false;
         encounter.mobs[mob_idx].hp = 0;
-        encounter.encounter_status = 1;
-        character.status = 0;
-        finalize_encounter( user, character.level, encounter );
+        
+        if (is_encounter_over(character, encounter)) {
+          encounter.encounter_status = 1;
+          character.status = 0;
+          generate_reward( user, user, character.level, encounter );  
+        }
+        
       }
     } else {
       print("\nPLAYER TURN: Missed");
@@ -166,21 +176,16 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
 
         if (mob_damage < character.hp) {
             character.hp -= mob_damage;
-            update_encounter(user, user, encounter);
         } else {
             character.hp = 0;
             character.status = 0;
             encounter.encounter_status = 2;
-            update_encounter(user, user, encounter);
         }
       } else {
         encounter.mobs[mob_idx].last_decision_hit = 0;
         print("\nPLAYER TURN: Miseed");
       }
     }
-    
-  
-    update_character(user, user, character);
       
   } else if (combat_decision == as_integer(combat_decision::FLEE)) {
     print("\nCombat Decision: FLEE");
@@ -188,22 +193,20 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
     int FLEE_MIN = 35;
 
     if (roll >= FLEE_MIN) {
-      //string new_log = update_log(encounter.encounter_id, "Flee failed. Lose health.");
+
       print(" Failed. Lose health x2");
       // TODO: Calc mob damage
       int damage = 75;
       if (damage < character.hp) {
         character.hp -= damage;
-        update_character(user, user, character);
       } else {
         character.hp = 0;
         character.status = 0;
-        update_character(user, user, character);
       }
     } else if (roll < FLEE_MIN) {
       print(" Success. No combat.");
       encounter.encounter_status = 1;
-      flee_encounter( user, encounter );
+      //flee_encounter( user, encounter );
     }
   } else if (combat_decision == as_integer(combat_decision::BRIBE)) {
     print("\nCombat Decision: BRIBE");
@@ -218,28 +221,41 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
     }
     // Check if user has required balance
   }
+  
+  auto c_itr = characters.find(encounter.character_id);
+  characters.modify(c_itr, user, [&](auto& c) {
+    c = character;
+  });
+  
+  auto e_itr = encounters.find(encounter_id);
+  encounters.modify(e_itr, user, [&](auto& e) {
+    e = encounter;
+  });
 };
 
 // TODO: Add crits = double damage
-uint64_t ebonhavencom::calculate_player_attack_damage( name user,
+uint64_t ebonhaven::calculate_player_attack_damage( name user,
                                                        ebonhaven::character& c,
                                                        ebonhaven::mob& m, bool is_ranged = false)
 {
   uint64_t damage = 0;
   uint64_t aura_damage = 0;
-  dgood_index items(get_self(), get_self().value);
-  auras_table auras(get_self(), get_self().value);
+  dgoods_index items(get_self(), get_self().value);
+  
+  auras_index auras(get_self(), get_self().value);
 
-  ebonhaven::item item;
+  ebonhaven::dgood item;
 
   if (!is_ranged) {
     if (m.mob_type == as_integer(mob_type::FLYING)) {
       return damage;
     }
     if (c.equipped.weapon > 0) {
-      item = items.get(c.equipped.weapon, "Couldn't find weapon");
-      for ( auto a: item.auras ) {
-        auto aura = auras.get(a, "Couldn't find aura");
+      item = items.get(c.equipped.weapon, "couldn't find weapon");
+      stats_index stats(get_self(), item.category.value);
+      auto stat = stats.get(item.token_name.value, "couldn't find parent item");
+      for ( auto a: stat.attributes.auras ) {
+        auto aura = auras.get(a, "couldn't find aura");
         json j = json::parse(aura.aura_data);
         if (j.count("damage") > 0) {
             aura_damage += j["damage"].get<uint64_t>();
@@ -254,8 +270,10 @@ uint64_t ebonhavencom::calculate_player_attack_damage( name user,
     damage = (aura_damage + c.attack.physical) - m.defense.physical;      
   } else {
     if (c.equipped.ranged > 0) {
-      item = items.get(c.equipped.ranged, "Couldn't find ranged weapon");
-      for ( auto a: item.auras ) {
+      item = items.get(c.equipped.ranged, "couldn't find ranged weapon");
+      stats_index stats(get_self(), item.category.value);
+      auto stat = stats.get(item.token_name.value, "couldn't find parent item");
+      for ( auto a: stat.attributes.auras ) {
         auto aura = auras.get(a, "Couldn't find aura");
         json j = json::parse(aura.aura_data);
         if (j.count("damage") > 0) {
@@ -285,57 +303,152 @@ uint64_t ebonhavencom::calculate_player_attack_damage( name user,
   return damage;
 }
 
-ebonhavencom::reward ebonhaven::generate_reward( name user, name payer, uint32_t character_level, encounter s_encounter ) {
+void ebonhaven::generate_encounter( name user, name payer, ebonhaven::character& character, vector<uint64_t> mob_ids)
+{
+    encounters_index encounters(get_self(), user.value);
+    check(character.status == 4, "character not in combat");
+    for (auto& enc: encounters) {
+        check(enc.character_id != character.character_id, "encounter already exists for character");
+    }
+
+    mobs_index mobs(get_self(), get_self().value);
+    vector<mob> v_mobs = {};
+    for (uint8_t i = 0; i < mob_ids.size(); i++) {
+      auto mob = mobs.get(mob_ids[i], "can't find mob");
+      v_mobs.push_back(mob);
+    }
+    
+    ebonhaven::encounter enc;
+    enc.encounter_id = encounters.available_primary_key();
+    if (enc.encounter_id == 0) {
+      enc.encounter_id = 1;
+    }
+    enc.character_id = character.character_id;
+    enc.mobs = v_mobs;
+
+    encounters.emplace( payer, [&]( auto& e ) {
+      e = enc;
+    });
+};
+
+ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> selected_items)
+{
+  require_auth( user );
+
+  accounts_index accounts(get_self(), user.value );
+  characters_index characters(get_self(), user.value );
+  rewards_index rewards(get_self(), user.value);
+  encounters_index encounters(get_self(), user.value);
+  auto reward = rewards.get( reward_id, "reward not found" );
+  auto acct = accounts.get( user.value, "couldn't find account");
+  auto character = characters.get( reward.character_id, "couldn't find character" );
+  check(character.owner == user, "character does not belong to user");
+
+  if (reward.experience > 0) {
+    character.experience += reward.experience;
+  }
+
+  if (reward.worth.amount > 0) {
+    action(
+      permission_level{get_self(),"active"_n},
+      get_self(),
+      name("tokenreward"),
+      std::make_tuple(user, reward.worth)
+    ).send();
+  }
+  
+  for (auto const& item: reward.items) {
+    stats_index stats(get_self(), name("ebonhavencom").value);
+    auto itr = stats.find(item.value);
+    bool i_found = find(selected_items.begin(), selected_items.end(), item) != selected_items.end();
+
+    if (i_found) {
+      check(inventory_count(user) <= acct.max_inventory - 1, "not enough inventory space");
+      action(
+        permission_level{ get_self(), name("active") },
+        name("ebonhavencom"),
+        name("issue"),
+        make_tuple( user, name("ebonhavencom"), item, string("1"), string("1"), string(""), string("issued from ebonhavencom"))
+      ).send();
+    }
+  }
+
+  if (reward.encounter_id > 0) {
+    auto e_itr = encounters.find(reward.encounter_id);
+    encounters.erase(e_itr);
+  }
+  
+  // Update character
+  auto c_itr = characters.find(reward.character_id);
+  characters.modify(c_itr, user, [&](auto& c) {
+    c.experience = character.experience;
+  });
+  
+  auto r_itr = rewards.find(reward_id);
+  rewards.erase(r_itr);
+}
+
+void ebonhaven::generate_reward( name user,
+                                 name payer,
+                                 uint32_t character_level,
+                                 encounter s_encounter )
+{
+  drops_index drops(get_self(), get_self().value);
+  rewards_index rewards(get_self(), user.value);
   reward r = {};
   asset total_reward = asset(0, symbol(symbol_code("EBON"),2));
   r.experience = calculate_total_experience(character_level, s_encounter);
-  vector<uint64_t> rewardItems;
+  vector<name> reward_items;
   for (auto& mob: s_encounter.mobs) {
     print(" Mob worth: ", mob.worth.amount);
     total_reward.amount += mob.worth.amount;
     auto roll = random(100);
     print(" Comp roll: ", roll);
-    for (auto& drop: mob.drop.drops) {
+    auto m_drop = drops.get(mob.drop_id, "couldn't find drop");
+    for (auto& drop: m_drop.drops) {
       uint8_t perc = abs(floor((100 * drop.percentage) / 100));
       // print(" Rolled on drop: ", perc);
       if ( roll <= perc ) {
-        print(" Item won: ", drop.item_id);
-        rewardItems.push_back(drop.item_id);
+        print(" Item won: ", drop.token_name);
+        reward_items.push_back(drop.token_name);
       }
     }
   }
-
-  dgood_index items(get_self(), get_self().value);
-  for (auto& id: rewardItems) {
-    auto itr = items.find(id);
-    if (itr != items.end()) {
-      item newItem = items.get(id);
-      newItem.parent_id = newItem.item_id;
-      auto str = to_string(newItem.item_id) + newItem.item_name + to_string(current_time());
-      auto hash = create_hash(str);
-      newItem.item_id = hash;
-      upsert_item( user, newItem, payer );
-      r.items.push_back( newItem );
-    }
+  
+  r.reward_id = rewards.available_primary_key();
+  if (r.reward_id == 0) {
+    r.reward_id = 1;
   }
-
+  r.items = reward_items;
   r.worth = total_reward;
-
-  auto str = "reward" + to_string(current_time());
-  auto hash = create_hash(str);
-  r.reward_id = hash;
   r.encounter_id = s_encounter.encounter_id;
   r.character_id = s_encounter.character_id;
 
   print(" Total mob worth: ", total_reward);
-  return r;
+  
+  rewards.emplace(payer, [&](auto& reward) {
+    reward = r;
+  });
+  
 }
 
 // TODO: No experience if mob is more than 4 levels below character
-uint32_t ebonhavencom::calculate_total_experience(uint32_t character_level, encounter e) {
+uint32_t ebonhaven::calculate_total_experience(uint32_t character_level, encounter e) {
   uint32_t total_exp = 0;
   for (auto& mob: e.mobs) {
-      total_exp += mob.experience;
+    total_exp += mob.experience;
   }
   return total_exp;
+}
+
+bool ebonhaven::is_encounter_over(character c, encounter e) {
+  if (c.hp == 0) {
+    return true;
+  }
+  vector<mob> alive_mobs;
+  copy_if(e.mobs.begin(), e.mobs.end(), back_inserter(alive_mobs), [](mob m) { return m.hp > 0; });
+  if (alive_mobs.size() == 0) {
+    return true;
+  }
+  return false;
 }

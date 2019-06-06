@@ -1,6 +1,6 @@
 {
-  "main": "src\\ebonhavencom.cpp",
-  "contract": "ebonhavencom",
+  "main": "src\\ebonhaven.cpp",
+  "contract": "ebonhaven",
   "include": "",
   "cdt": "",
   "output": "",

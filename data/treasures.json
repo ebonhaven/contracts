@@ -1,0 +1,17 @@
+{
+  "treasures": [
+    {
+      "world_zone_id": 1,
+      "drops": [
+        {
+          "percentage": 0.50,
+          "token_name": "treasure1"
+        },
+        {
+          "percentage": 0.50,
+          "token_name": "treasure2"
+        }
+      ]
+    }
+  ]
+}

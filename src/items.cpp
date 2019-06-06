@@ -1,7 +1,7 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
 //Admin
-ACTION ebonhavencom::create( name category,
+ACTION ebonhaven::create( name category,
                             name token_name,
                             bool fungible,
                             bool burnable,
@@ -59,7 +59,7 @@ ACTION ebonhavencom::create( name category,
   config_table.set( config_singleton, get_self() );
 }
 
-ACTION ebonhavencom::issue(name to,
+ACTION ebonhaven::issue(name to,
                            name category,
                            name token_name,
                            string quantity,
@@ -112,7 +112,7 @@ ACTION ebonhavencom::issue(name to,
   });
 }
 
-ACTION ebonhavencom::transfernft(name from,
+ACTION ebonhaven::transfernft(name from,
                                  name to,
                                  vector<uint64_t> dgood_ids,
                                  string memo ) {
@@ -130,7 +130,7 @@ ACTION ebonhavencom::transfernft(name from,
   check( memo.size() <= 256, "memo has more than 256 bytes" );
 
   // loop through vector of dgood_ids, check token exists
-  dgood_index dgood_table( get_self(), get_self().value );
+  dgoods_index dgood_table( get_self(), get_self().value );
   for ( auto const& dgood_id: dgood_ids ) {
     auto& token = dgood_table.get( dgood_id, "token does not exist" );
     check( token.owner == from, "must be token owner" );
@@ -161,12 +161,12 @@ ACTION ebonhavencom::transfernft(name from,
   }
 }
 
-ACTION ebonhavencom::burnnft(name owner, vector<uint64_t> dgood_ids)
+ACTION ebonhaven::burnnft(name owner, vector<uint64_t> dgood_ids)
 {
   require_auth(owner);
 
   // loop through vector of dgood_ids, check token exists
-  dgood_index dgood_table( get_self(), get_self().value );
+  dgoods_index dgood_table( get_self(), get_self().value );
   for ( auto const& dgood_id: dgood_ids ) {
     const auto& token = dgood_table.get( dgood_id, "token does not exist" );
     check( token.owner == owner, "must be token owner" );
@@ -194,7 +194,7 @@ ACTION ebonhavencom::burnnft(name owner, vector<uint64_t> dgood_ids)
 }
 
 // Private
-void ebonhavencom::mint(name to,
+void ebonhaven::mint(name to,
                         name issuer,
                         name category,
                         name token_name,
@@ -203,7 +203,7 @@ void ebonhavencom::mint(name to,
                         dgood_attributes attributes)
 {
 
-  dgood_index dgood_table( get_self(), get_self().value);
+  dgoods_index dgood_table( get_self(), get_self().value);
   auto dgood_id = dgood_table.available_primary_key();
   if (dgood_id == 0) {
     dgood_id++;
@@ -231,9 +231,9 @@ void ebonhavencom::mint(name to,
 }
 
 // Private
-void ebonhavencom::add_balance( name owner, name ram_payer, name category, name token_name,
+void ebonhaven::add_balance( name owner, name ram_payer, name category, name token_name,
                                 uint64_t category_name_id, dasset quantity) {
-  balance_index to_account( get_self(), owner.value );
+  balances_index to_account( get_self(), owner.value );
   auto acct = to_account.find( category_name_id );
   if ( acct == to_account.end() ) {
     to_account.emplace( ram_payer, [&]( auto& a ) {
@@ -250,9 +250,9 @@ void ebonhavencom::add_balance( name owner, name ram_payer, name category, name 
 }
 
 // Private
-void ebonhavencom::sub_balance( name owner, uint64_t category_name_id, dasset quantity ) {
+void ebonhaven::sub_balance( name owner, uint64_t category_name_id, dasset quantity ) {
 
-  balance_index from_account( get_self(), owner.value );
+  balances_index from_account( get_self(), owner.value );
   const auto& acct = from_account.get( category_name_id, "token does not exist in account" );
   check( acct.amount.amount >= quantity.amount, "quantity is more than account balance");
 

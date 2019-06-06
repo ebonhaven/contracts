@@ -1,31 +1,20 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
 #include "account.cpp"
 #include "admin.cpp"
 #include "character.cpp"
 #include "game.cpp"
 #include "items.cpp"
-
-
 #include "token.cpp"
 
-// Private
-ACTION ebonhavencom::gentreasure( name user, uint64_t character_id ) {
-  require_auth( get_self() );
-  
-  rewards_index rewards(get_self(), user.value);
-  // uint64_t treasure_item = roll_treasure();
-  
-}
-
-ACTION ebonhavencom::printval( name user )
+ACTION ebonhaven::printval( name user )
 {
   print("Total items: ");
   print(inventory_count(user));
 }
 
 // Admin
-ACTION ebonhavencom::setconfig(string version)
+ACTION ebonhaven::setconfig(string version)
 {
   require_auth( get_self() );
 
@@ -42,11 +31,13 @@ ACTION ebonhavencom::setconfig(string version)
   globals_table.set(global_singleton, get_self());
 }
 
-EOSIO_DISPATCH(ebonhavencom, 
+EOSIO_DISPATCH(ebonhaven, 
   (newaccount)
   (newcharacter)
   (delcharacter)
   (move)
+  (combat)
+  (claimrewards)
   (useitem)
   (equipitem)
   (buyability)
@@ -54,16 +45,22 @@ EOSIO_DISPATCH(ebonhavencom,
   (printval)
   (spawnitem)
   (spawnability)
+  (newencounter)
+  (modencounter)
+  (delencounter)
   (create)
   (issue)
   (transfernft)
   (burnnft)
   (upsaura)
   (upsability)
-  (upstreasure)
   (upseffect)
   (upsstats)
+  (upsrates)
+  (upsmob)
   (upsdrop)
+  (upsresource)
+  (upstreasure)
   (setconfig)
   (tokenreward)
   (tokenissue)

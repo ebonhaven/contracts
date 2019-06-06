@@ -1,8 +1,8 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
 using namespace nlohmann;
 
-ACTION ebonhavencom::newcharacter( name     user,
+ACTION ebonhaven::newcharacter( name     user,
                                    string   character_name,
                                    uint8_t  gender,
                                    uint8_t  profession,
@@ -53,7 +53,7 @@ ACTION ebonhavencom::newcharacter( name     user,
   });
 }
 
-ACTION ebonhavencom::delcharacter( name user, uint64_t character_id ) {
+ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
   require_auth( user );
 
   characters_index characters(get_self(), user.value);
@@ -157,14 +157,14 @@ ACTION ebonhavencom::delcharacter( name user, uint64_t character_id ) {
 }
 
 // TODO: Skip player turn if used in combat
-ACTION ebonhavencom::useitem( name user, uint64_t character_id, uint64_t dgood_id, uint8_t effect_idx = 0 ) {
+ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, uint8_t effect_idx = 0 ) {
     require_auth( user );
 
     characters_index characters(get_self(), user.value);
     accounts_index accounts(get_self(), user.value);
     effects_index effects(get_self(), get_self().value);
     
-    dgood_index items(get_self(), get_self().value);
+    dgoods_index items(get_self(), get_self().value);
 
     auto acct = accounts.get(user.value, "couldn't find account");
     auto c = characters.get(character_id, "couldn't find character");
@@ -202,12 +202,12 @@ ACTION ebonhavencom::useitem( name user, uint64_t character_id, uint64_t dgood_i
     }   
 };
 
-ACTION ebonhavencom::equipitem( name user, uint64_t character_id, uint64_t dgood_id, uint8_t equip_slot ) {
+ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id, uint8_t equip_slot ) {
   require_auth( user );
 
   characters_index characters_table(get_self(), user.value);
   accounts_index accounts_table(get_self(), user.value);
-  dgood_index items(get_self(), get_self().value);
+  dgoods_index items(get_self(), get_self().value);
 
   auto acct = accounts_table.get(user.value, "couldn't find account");
   auto c = characters_table.get(character_id, "couldn't find character");
@@ -358,7 +358,7 @@ ACTION ebonhavencom::equipitem( name user, uint64_t character_id, uint64_t dgood
   });
 }
 
-ACTION ebonhavencom::buyability( name user, uint64_t character_id, uint64_t ability_id )
+ACTION ebonhaven::buyability( name user, uint64_t character_id, uint64_t ability_id )
 {
   require_auth( user );
 
@@ -394,7 +394,7 @@ ACTION ebonhavencom::buyability( name user, uint64_t character_id, uint64_t abil
   });
 }
 
-ACTION ebonhavencom::equipability( name user, uint64_t character_id, uint64_t ability_id, uint8_t ability_idx )
+ACTION ebonhaven::equipability( name user, uint64_t character_id, uint64_t ability_id, uint8_t ability_idx )
 {
   require_auth( user );
 
@@ -420,7 +420,7 @@ ACTION ebonhavencom::equipability( name user, uint64_t character_id, uint64_t ab
     check(ability_idx == 4, "ability index reserved for race ability");
   }
 
-  ebonhavencom::charhistory empty = {};
+  ebonhaven::charhistory empty = {};
   if (c.abilities.ability1 == ability_id) {
     c.abilities.ability1 = 0;
   } else if (c.abilities.ability2 == ability_id) {
@@ -456,7 +456,7 @@ ACTION ebonhavencom::equipability( name user, uint64_t character_id, uint64_t ab
   });
 }
 
-void ebonhavencom::reset_stats( ebonhavencom::character& c ) {
+void ebonhaven::reset_stats( ebonhaven::character& c ) {
   basestats_index basestats(get_self(), get_self().value);
   auto& base = basestats.get(c.profession, "Base stats for profession does not exist");
 
@@ -471,7 +471,7 @@ void ebonhavencom::reset_stats( ebonhavencom::character& c ) {
   c.stats.luck = base.base_stats.luck + (base.stats_increase.luck * c.level);
 }
 
-void ebonhavencom::add_item_stats( name user, ebonhavencom::character& c ) {
+void ebonhaven::add_item_stats( name user, ebonhaven::character& c ) {
   if (c.equipped.head > 0) { apply_item_auras( user, c, c.equipped.head ); }
   if (c.equipped.neck > 0) { apply_item_auras( user, c, c.equipped.neck ); }
   if (c.equipped.shoulders > 0) { apply_item_auras( user, c, c.equipped.shoulders ); }
@@ -489,8 +489,8 @@ void ebonhavencom::add_item_stats( name user, ebonhavencom::character& c ) {
   if (c.equipped.trinket2 > 0) { apply_item_auras( user, c, c.equipped.trinket2 ); }
 }
 
-void ebonhavencom::apply_item_auras( name user, ebonhavencom::character& c, uint64_t item_id ) {
-  dgood_index items(get_self(), get_self().value);
+void ebonhaven::apply_item_auras( name user, ebonhaven::character& c, uint64_t item_id ) {
+  dgoods_index items(get_self(), get_self().value);
   auto item = items.get( item_id, "couldn't find item" );
   auras_index auras(get_self(), get_self().value);
   stats_index stats(get_self(), item.category.value);
@@ -537,7 +537,7 @@ void ebonhavencom::apply_item_auras( name user, ebonhavencom::character& c, uint
   }
 }
 
-void ebonhavencom::apply_effect_to_character( effect e, character& c ) {
+void ebonhaven::apply_effect_to_character( effect e, character& c ) {
     auto j = json::parse(e.effect_data);
     if (j.count("hp_delta") > 0) {
         auto result = c.hp += j["hp_delta"].get<uint64_t>();

@@ -19,7 +19,7 @@
             "effect_type": 0,
             "chance": 1,
             "cooldown": 1,
-            "effect_data": "{\"unlocks\":[9001]}"
+            "effect_data": "{\"unlocks\":[\"treasure1\"]}"
         }
     ]
 }

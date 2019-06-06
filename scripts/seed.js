@@ -6,6 +6,9 @@ const auras = require('../data/auras.json').auras;
 const abilities = require('../data/abilities.json').abilities;
 const items = require('../data/items.json').items;
 const drops = require('../data/drops.json').drops;
+const mobs = require('../data/mobs.json').mobs;
+const resources = require('../data/resources.json').resources;
+const treasures = require('../data/treasures.json').treasures;
 const argv = require('yargs').argv
 
 class Seeder {
@@ -204,6 +207,60 @@ class Seeder {
         });
         this.eos.actions(actions);
     }
+
+    seedMobs() {
+        console.log("Seeding mobs...");
+        let actions = [];
+        mobs.forEach((m) => {
+            let action = {
+                account: "ebonhavencom",
+                name: "upsmob",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: m
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
+
+    seedResources() {
+        console.log("Seeding resources...");
+        let actions = [];
+        resources.forEach((r) => {
+            let action = {
+                account: "ebonhavencom",
+                name: "upsresource",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: r
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
+
+    seedTreasures() {
+        console.log("Seeding treasures...");
+        let actions = [];
+        treasures.forEach((t) => {
+            let action = {
+                account: "ebonhavencom",
+                name: "upstreasure",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: t
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
 };
 
 const seeder = new Seeder;
@@ -236,6 +293,15 @@ switch(argv._[0]) {
     case "drops":
         seeder.seedDrops();
         break;
+    case "mobs":
+        seeder.seedMobs();
+        break;
+    case "resources":
+        seeder.seedResources();
+        break;
+    case "treasures":
+        seeder.seedTreasures();
+        break;
     case "retireall":
         seeder.retireAllItems();
         break;
@@ -248,5 +314,8 @@ switch(argv._[0]) {
         seeder.seedItems();
         seeder.seedCharacters();
         seeder.seedDrops();
+        seeder.seedMobs();
+        seeder.seedResources();
+        seeder.seedTreasures();
         break;
 }

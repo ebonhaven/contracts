@@ -1,6 +1,6 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
-ACTION ebonhavencom::tokenreward( name to, asset quantity )
+ACTION ebonhaven::tokenreward( name to, asset quantity )
 {
   require_auth(get_self());
 
@@ -24,7 +24,7 @@ ACTION ebonhavencom::tokenreward( name to, asset quantity )
   });
 }
 
-ACTION ebonhavencom::tokenissue( name to, asset quantity )
+ACTION ebonhaven::tokenissue( name to, asset quantity )
 {
   require_auth( get_self() );
   auto sym = quantity.symbol;
@@ -54,7 +54,7 @@ ACTION ebonhavencom::tokenissue( name to, asset quantity )
   }
 }
 
-ACTION ebonhavencom::tokenxfer( name from, name to, asset quantity )
+ACTION ebonhaven::tokenxfer( name from, name to, asset quantity )
 {
     require_auth( from );
     check( from != to, "cannot transfer to self" );
@@ -76,7 +76,7 @@ ACTION ebonhavencom::tokenxfer( name from, name to, asset quantity )
     add_token_balance( to, quantity, payer );
 }
 
-ACTION ebonhavencom::tokenretire( asset quantity, string memo )
+ACTION ebonhaven::tokenretire( asset quantity, string memo )
 {
   require_auth( get_self() );
   auto sym = quantity.symbol;
@@ -97,7 +97,7 @@ ACTION ebonhavencom::tokenretire( asset quantity, string memo )
   sub_token_balance( get_self(), quantity );
 }
 
-void ebonhavencom::add_token_balance( name owner, asset value, name ram_payer )
+void ebonhaven::add_token_balance( name owner, asset value, name ram_payer )
 {
     accounts_index accounts_table(get_self(), owner.value);
     auto to = accounts_table.find( owner.value );
@@ -107,7 +107,7 @@ void ebonhavencom::add_token_balance( name owner, asset value, name ram_payer )
     });
 }
 
-void ebonhavencom::sub_token_balance( name owner, asset value )
+void ebonhaven::sub_token_balance( name owner, asset value )
 {
     accounts_index accounts_table(get_self(), owner.value);
     auto from = accounts_table.get( owner.value );

@@ -6,7 +6,6 @@
   "scripts": {
     "seed": "node scripts/seed.js",
     "seed:accounts": "node scripts/seed.js accounts",
-    "seed:basestats": "node scripts/seed.js basestats",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

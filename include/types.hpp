@@ -1,6 +1,7 @@
 #pragma once
 
 using namespace eosio;
+using namespace std;
 
 namespace types {
   
@@ -44,6 +45,18 @@ namespace types {
     LOSE = 2
   };
   
+  enum class combat_decision: uint8_t {
+    NONE = 0,
+    MELEE = 1,
+    RANGED = 2,
+    ABILITY1 = 3,
+    ABILITY2 = 4,
+    ABILITY3 = 5,
+    RACEABILITY = 6,
+    FLEE = 7,
+    BRIBE = 8
+  };
+  
   enum class combat_target: uint8_t {
     ENEMY = 0,
     ALL = 1,
@@ -55,6 +68,15 @@ namespace types {
     APPLYEFFECT = 0,
     ADDAURA = 1,
     ITEMEFFECT = 2
+  };
+  
+  enum class mob_type: uint8_t {
+    BASIC = 0,
+    FLYING = 1,
+    ARMORED = 2,
+    ETHEREAL = 3,
+    ELITE = 4,
+    BOSS = 5
   };
   
   struct attack {
@@ -103,9 +125,33 @@ namespace types {
     time_point_sec updated_at;
   };
   
+  struct mod_mob {
+    uint32_t mob_id;
+    string   mob_name;
+    int32_t  level = 1;
+    uint8_t  mob_type = 0;
+    uint8_t  last_decision = 0;
+    uint8_t  last_decision_hit = 1;
+    attack   attack;
+    defense  defense;
+    string   mob_data;
+    uint32_t hp = 0;
+    uint32_t max_hp = 0;
+    uint32_t experience = 0;
+    asset    worth = asset(0, symbol(symbol_code("EBON"),2));
+    uint64_t drop_id;
+  };
+  
   struct item_drop {
     float_t percentage = 0.00;
     name    token_name;
+  };
+  
+  struct resource_drop {
+    float_t percentage = 0.00;
+    name    token_name;
+    uint8_t min_items;
+    uint8_t max_items;
   };
   
   struct combatslots {

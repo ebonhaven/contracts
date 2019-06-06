@@ -17,7 +17,7 @@ using namespace types;
 using namespace dgoods_asset;
 using namespace item_attributes;
 
-CONTRACT ebonhavencom : public contract {
+CONTRACT ebonhaven : public contract {
   
   private:
   
@@ -41,7 +41,7 @@ CONTRACT ebonhavencom : public contract {
     }
     
     int inventory_count(name user) {
-      dgood_index dgood_table(get_self(), get_self().value);
+      dgoods_index dgood_table(get_self(), get_self().value);
       auto index_by_owner = dgood_table.get_index<name("byowner")>();
       auto itr = index_by_owner.lower_bound(user.value);
       int i = 0;
@@ -130,15 +130,15 @@ CONTRACT ebonhavencom : public contract {
     };
     
     TABLE aura {
-        uint64_t aura_id;
-        string   aura_name;
-        string   aura_description;
-        uint16_t aura_type;
-        uint8_t  is_hidden = 0;
-        uint8_t  cooldown = 1;
-        string   aura_data;
+      uint64_t aura_id;
+      string   aura_name;
+      string   aura_description;
+      uint16_t aura_type;
+      uint8_t  is_hidden = 0;
+      uint8_t  cooldown = 1;
+      string   aura_data;
 
-        uint64_t primary_key() const { return aura_id; }
+      uint64_t primary_key() const { return aura_id; }
     };
     
     TABLE effect {
@@ -190,11 +190,9 @@ CONTRACT ebonhavencom : public contract {
       uint8_t  last_decision_hit = 1;
       attack   attack;
       defense  defense;
+      string   mob_data;
       uint32_t hp = 0;
       uint32_t max_hp = 0;
-      uint16_t ability1 = 0;
-      uint16_t ability2 = 0;
-      uint16_t ability3 = 0;
       uint32_t experience = 0;
       asset    worth = asset(0, symbol(symbol_code("EBON"),2));
       uint64_t drop_id;
@@ -226,12 +224,12 @@ CONTRACT ebonhavencom : public contract {
     };
     
     TABLE reward {
-      uint64_t         reward_id;
-      uint64_t         character_id;
-      uint64_t         encounter_id;
-      uint32_t         experience;
-      asset            worth = asset(0, symbol(symbol_code("EBON"), 2));
-      vector<uint64_t> items;
+      uint64_t     reward_id;
+      uint64_t     character_id;
+      uint64_t     encounter_id;
+      uint32_t     experience;
+      asset        worth = asset(0, symbol(symbol_code("EBON"), 2));
+      vector<name> items;
       
       auto primary_key() const { return reward_id; }
     };
@@ -243,31 +241,14 @@ CONTRACT ebonhavencom : public contract {
       uint64_t primary_key() const { return world_zone_id; }
     };
     
-    using globals_index = singleton< "globals"_n, globals >;
-    
-    using accounts_index = multi_index< "accounts"_n, account >;
-    
-    using characters_index = multi_index< "characters"_n, character >;
-    
-    using charhistory_index = multi_index< "charhistory"_n, charhistory >;
-    
-    using basestats_index = multi_index< "basestats"_n, basestat >;
-    
-    using auras_index = multi_index< "auras"_n, aura >;
-    
-    using effects_index = multi_index< "effects"_n, effect >;
-    
-    using abilities_index = multi_index< "abilities"_n, ability >;
-    
-    using drops_index = multi_index< "drops"_n, drop >;
-    
-    using mobs_index = multi_index< "mobs"_n, mob >;
-    
-    using encounters_index = multi_index< "encounters"_n, encounter >;
-    
-    using rewards_index = multi_index< "rewards"_n, reward >;
-    
-    using treasures_index = multi_index< "treasures"_n, treasure >;
+    // Scope is profession id
+    TABLE resource {
+      uint64_t world_zone_id;
+      uint32_t min_skill;
+      vector<resource_drop> drops;
+      
+      uint64_t primary_key() const { return world_zone_id; }
+    };
     
     // dGoods
     TABLE categoryinfo {
@@ -285,6 +266,7 @@ CONTRACT ebonhavencom : public contract {
       uint64_t primary_key() const { return category_name_id; }
     };
     
+    // Scope is category name (ebonhavencom)
     TABLE dgoodstats {
       bool     fungible;
       bool     burnable;
@@ -317,13 +299,43 @@ CONTRACT ebonhavencom : public contract {
     
     EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri)(equipped)(attributes) )
     
-    using balance_index = multi_index< "balances"_n, balances >;
+    
+    // TABLES
+    using globals_index = singleton< "globals"_n, globals >;
+    
+    using accounts_index = multi_index< "accounts"_n, account >;
+    
+    using characters_index = multi_index< "characters"_n, character >;
+    
+    using charhistory_index = multi_index< "charhistory"_n, charhistory >;
+    
+    using basestats_index = multi_index< "basestats"_n, basestat >;
+    
+    using auras_index = multi_index< "auras"_n, aura >;
+    
+    using effects_index = multi_index< "effects"_n, effect >;
+    
+    using abilities_index = multi_index< "abilities"_n, ability >;
+    
+    using drops_index = multi_index< "drops"_n, drop >;
+    
+    using mobs_index = multi_index< "mobs"_n, mob >;
+    
+    using encounters_index = multi_index< "encounters"_n, encounter >;
+    
+    using rewards_index = multi_index< "rewards"_n, reward >;
+    
+    using treasures_index = multi_index< "treasures"_n, treasure >;
+    
+    using resources_index = multi_index< "resources"_n, resource >;
+    
+    using balances_index = multi_index< "balances"_n, balances >;
     
     using stats_index = multi_index< "dgoodstats"_n, dgoodstats>;
     
     using category_index = multi_index< "categoryinfo"_n, categoryinfo>;
     
-    using dgood_index = multi_index< "dgood"_n, dgood,
+    using dgoods_index = multi_index< "dgood"_n, dgood,
             indexed_by< "byowner"_n, const_mem_fun< dgood, uint64_t, &dgood::get_owner> > >;
             
     void mint( name to, name issuer, name category, name token_name,
@@ -337,10 +349,21 @@ CONTRACT ebonhavencom : public contract {
     void apply_item_auras( name user, character& c, uint64_t item_id );
     void add_token_balance( name owner, asset value, name ram_payer );
     void sub_token_balance( name owner, asset value );
+    uint64_t calculate_player_attack_damage( name user,
+                                             ebonhaven::character& c,
+                                             ebonhaven::mob& m,
+                                             bool is_ranged);
+    void generate_encounter( name user, name payer, ebonhaven::character& character, vector<uint64_t> mob_ids);
+    void generate_reward( name user,
+                          name payer,
+                          uint32_t character_level,
+                          encounter s_encounter );
+    uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
+    bool is_encounter_over(ebonhaven::character c, ebonhaven::encounter e);
             
   public:
     using contract::contract;
-    ebonhavencom(eosio::name receiver, eosio::name code, datastream<const char*> ds):contract(receiver, code, ds) {}
+    ebonhaven(eosio::name receiver, eosio::name code, datastream<const char*> ds):contract(receiver, code, ds) {}
     
     const int WEEK_SEC = 3600*24*7;
     
@@ -362,7 +385,11 @@ CONTRACT ebonhavencom : public contract {
     
     ACTION equipability( name user, uint64_t character_id, uint64_t ability_id, uint8_t ability_idx );
                          
-    ACTION move( name user, uint64_t character_id, position new_position);
+    ACTION move( name user, uint64_t character_id, position new_position );
+    
+    ACTION combat( name user, uint64_t encounter_id, uint8_t combat_decision, uint8_t mob_idx );
+    
+    ACTION claimrewards( name user, uint64_t reward_id, vector<name> selected_items );
     
     ACTION printval( name user );
     
@@ -371,6 +398,18 @@ CONTRACT ebonhavencom : public contract {
     
     //Admin
     ACTION spawnability( name user, uint64_t character_id, uint64_t ability_id );
+    
+    // Admin
+    ACTION newencounter( name user, uint64_t character_id, vector<uint64_t> mob_ids );
+    
+    // Admin
+    ACTION modencounter( name user,
+                         uint64_t encounter_id,
+                         uint8_t encounter_status, 
+                         vector<mod_mob> mobs );
+    
+    // Admin                     
+    ACTION delencounter( name user, uint64_t encounter_id );
     
     // Admin
     ACTION create( name category,
@@ -434,9 +473,36 @@ CONTRACT ebonhavencom : public contract {
                      defense defense_increase,
                      stats   base_stats,
                      stats   stats_increase );
+                     
+    // Admin                     
+    ACTION upsrates( float_t combat_rate,
+                     float_t resource_rate,
+                     float_t discovery_rate,
+                     float_t trap_rate, 
+                     float_t treasure_rate,
+                     float_t loot_rate );
+                     
+    // Admin
+    ACTION upsmob( uint32_t mob_id,
+                   string   mob_name,
+                   uint8_t  level,
+                   uint8_t  mob_type,
+                   attack   attack,
+                   defense  defense,
+                   string   mob_data,
+                   uint32_t hp,
+                   uint32_t experience,
+                   asset    worth,
+                   uint64_t drop_id );
     
     // Admin                 
     ACTION upsdrop( uint64_t drop_id, vector<item_drop> item_drops);
+    
+    // Admin
+    ACTION upsresource( uint64_t world_zone_id,
+                        uint8_t  profession_id,
+                        uint32_t min_skill,
+                        vector<resource_drop> drops );
                      
     // Admin
     ACTION upstreasure( uint64_t world_zone_id, vector<item_drop> drops );
@@ -455,7 +521,4 @@ CONTRACT ebonhavencom : public contract {
     
     // Admin
     ACTION tokenretire( asset quantity, string memo );
-    
-    // Private
-    ACTION gentreasure( name user, uint64_t character_id );
 };

@@ -183,6 +183,52 @@
       },
       "base_uri": "http://www.google.com",
       "max_supply": 10000
+    },
+    {
+      "category": "ebonhavencom",
+      "token_name": "treasure1",
+      "fungible": false,
+      "burnable": true,
+      "transferable": true,
+      "attributes": {
+        "item_name": "Wooden Chest",
+        "item_description": "Unlocked by Wooden Key",
+        "item_binding": 0,
+        "level_requirement": 1,
+        "quality": 2,
+        "slot": 0,
+        "item_type": 10,
+        "profession_lock": 0,
+        "max_durability": 0,
+        "repair_cost": "1.00 EBON",
+        "auras": [],
+        "effects": []
+      },
+      "base_uri": "http://www.google.com",
+      "max_supply": 10000
+    },
+    {
+      "category": "ebonhavencom",
+      "token_name": "treasure2",
+      "fungible": false,
+      "burnable": true,
+      "transferable": true,
+      "attributes": {
+        "item_name": "Wooden Key",
+        "item_description": "Unlocks Wooden Chest",
+        "item_binding": 0,
+        "level_requirement": 1,
+        "quality": 2,
+        "slot": 0,
+        "item_type": 11,
+        "profession_lock": 0,
+        "max_durability": 0,
+        "repair_cost": "0.00 EBON",
+        "auras": [],
+        "effects": [9001]
+      },
+      "base_uri": "http://www.google.com",
+      "max_supply": 10000
     }
   ]
 }

@@ -1,7 +1,7 @@
-#include <ebonhavencom.hpp>
+#include <ebonhaven.hpp>
 
 // Admin
-ACTION ebonhavencom::upsaura( uint64_t aura_id,
+ACTION ebonhaven::upsaura( uint64_t aura_id,
                               string aura_name, 
                               string aura_description,
                               uint8_t aura_type,
@@ -35,7 +35,7 @@ ACTION ebonhavencom::upsaura( uint64_t aura_id,
 }
 
 // Admin
-ACTION ebonhavencom::upsability( uint64_t ability_id,
+ACTION ebonhaven::upsability( uint64_t ability_id,
                                  string ability_name,
                                  string ability_description,
                                  asset ability_cost,
@@ -72,25 +72,7 @@ ACTION ebonhavencom::upsability( uint64_t ability_id,
 }
 
 // Admin
-ACTION ebonhavencom::upstreasure( uint64_t world_zone_id, vector<item_drop> drops ) {
-  require_auth( get_self() );
-  
-  treasures_index treasures( get_self(), get_self().value );
-  auto itr = treasures.find( world_zone_id );
-  if (itr == treasures.end() ) {
-    treasures.emplace( get_self(), [&](auto& t) {
-      t.world_zone_id = world_zone_id;
-      t.drops = drops;
-    });
-  } else {
-    treasures.modify( itr, get_self(), [&](auto& t) {
-      t.drops = drops;
-    });
-  }
-}
-
-// Admin
-ACTION ebonhavencom::upseffect(uint64_t effect_id,
+ACTION ebonhaven::upseffect(uint64_t effect_id,
                                uint8_t effect_type,
                                float_t chance,
                                uint8_t cooldown,
@@ -119,7 +101,7 @@ ACTION ebonhavencom::upseffect(uint64_t effect_id,
 }
 
 // Admin
-ACTION ebonhavencom::upsstats(uint8_t profession,
+ACTION ebonhaven::upsstats(uint8_t profession,
                               uint8_t base_hp,
                               uint8_t hp_increase,
                               attack  base_attack,
@@ -160,7 +142,81 @@ ACTION ebonhavencom::upsstats(uint8_t profession,
   }
 }
 
-ACTION ebonhavencom::upsdrop( uint64_t drop_id, vector<item_drop> item_drops)
+ACTION ebonhaven::upsrates( float_t combat_rate,
+                            float_t resource_rate,
+                            float_t discovery_rate,
+                            float_t trap_rate, 
+                            float_t treasure_rate,
+                            float_t loot_rate )
+{
+  require_auth( get_self() );
+
+  globals_index globals_table( get_self(), get_self().value );
+  auto global_singleton = globals_table.get();
+  
+  auto new_rates = rates{};
+  new_rates.combat = combat_rate;
+  new_rates.resource = resource_rate;
+  new_rates.discovery = discovery_rate;
+  new_rates.trap = trap_rate;
+  new_rates.treasure = treasure_rate;
+  new_rates.loot = loot_rate;
+  new_rates.updated_at = time_point_sec(current_time_point());
+  
+  global_singleton.rates = new_rates;
+  globals_table.set(global_singleton, get_self());
+}
+
+ACTION ebonhaven::upsmob( uint32_t mob_id,
+                          string   mob_name,
+                          uint8_t  level,
+                          uint8_t  mob_type,
+                          attack   attack,
+                          defense  defense,
+                          string   mob_data,
+                          uint32_t hp,
+                          uint32_t experience,
+                          asset    worth,
+                          uint64_t drop_id ) {
+    require_auth( get_self() );
+
+    mobs_index mobs(get_self(), get_self().value);
+    auto itr = mobs.find(mob_id); 
+
+    if ( itr == mobs.end() ) {
+      mobs.emplace( get_self(), [&]( auto& m ) {
+        m.mob_id = mob_id;
+        m.mob_name = mob_name;
+        m.level = level;
+        m.mob_type = mob_type;
+        m.attack = attack;
+        m.defense = defense;
+        m.mob_data = mob_data;
+        m.hp = hp;
+        m.max_hp = hp;
+        m.experience = experience;
+        m.worth = worth;
+        m.drop_id = drop_id;
+      });
+    } else {
+      mobs.modify( itr, get_self(), [&]( auto& m ) {
+        m.mob_id = mob_id;
+        m.mob_name = mob_name;
+        m.level = level;
+        m.mob_type = mob_type;
+        m.attack = attack;
+        m.defense = defense;
+        m.mob_data = mob_data;
+        m.hp = hp;
+        m.max_hp = hp;
+        m.experience = experience;
+        m.worth = worth;
+        m.drop_id = drop_id;
+      });
+    }
+};
+
+ACTION ebonhaven::upsdrop( uint64_t drop_id, vector<item_drop> item_drops)
 {
   require_auth( get_self() );
   drops_index drops(get_self(), get_self().value);
@@ -182,8 +238,49 @@ ACTION ebonhavencom::upsdrop( uint64_t drop_id, vector<item_drop> item_drops)
   }
 };
 
+ACTION ebonhaven::upsresource( uint64_t world_zone_id,
+                               uint8_t  profession_id,
+                               uint32_t min_skill,
+                               vector<resource_drop> drops )
+{
+  require_auth( get_self() );
+  
+  resources_index resources( get_self(), name(profession_id).value );
+  auto itr = resources.find(world_zone_id);
+  if ( itr == resources.end() ) {
+    resources.emplace( get_self(), [&](auto& r) {
+      r.world_zone_id = world_zone_id;
+      r.min_skill = min_skill;
+      r.drops = drops;
+    });
+  } else {
+    resources.modify( itr, get_self(), [&](auto& r) {
+      r.min_skill = min_skill;
+      r.drops = drops;
+    });
+  }
+}
+
 // Admin
-ACTION ebonhavencom::spawnitem( name to, name token_name )
+ACTION ebonhaven::upstreasure( uint64_t world_zone_id, vector<item_drop> drops ) {
+  require_auth( get_self() );
+  
+  treasures_index treasures( get_self(), get_self().value );
+  auto itr = treasures.find( world_zone_id );
+  if (itr == treasures.end() ) {
+    treasures.emplace( get_self(), [&](auto& t) {
+      t.world_zone_id = world_zone_id;
+      t.drops = drops;
+    });
+  } else {
+    treasures.modify( itr, get_self(), [&](auto& t) {
+      t.drops = drops;
+    });
+  }
+}
+
+// Admin
+ACTION ebonhaven::spawnitem( name to, name token_name )
 {
   require_auth( get_self() );
   
@@ -200,7 +297,7 @@ ACTION ebonhavencom::spawnitem( name to, name token_name )
 }
 
 // Admin
-ACTION ebonhavencom::spawnability( name user, uint64_t character_id, uint64_t ability_id )
+ACTION ebonhaven::spawnability( name user, uint64_t character_id, uint64_t ability_id )
 {
   require_auth( get_self() );
 
@@ -225,4 +322,81 @@ ACTION ebonhavencom::spawnability( name user, uint64_t character_id, uint64_t ab
   history.modify( itr, get_self(), [&](auto& row) {
     row.learned_abilities = info.learned_abilities;
   });
+}
+
+// Admin
+ACTION ebonhaven::newencounter( name user, uint64_t character_id, vector<uint64_t> mob_ids )
+{
+  require_auth( get_self() );
+
+  characters_index characters(get_self(), user.value);
+  auto character = characters.get(character_id, "couldn't find character");
+
+  character.status = as_integer(outcomes::COMBAT);
+  
+  generate_encounter( user, get_self(), character, mob_ids );
+
+  auto c_itr = characters.find(character.character_id);
+  characters.modify(c_itr, get_self(), [&](auto& c) {
+    c = character;
+  });
+}
+
+ACTION ebonhaven::modencounter( name user,
+                                uint64_t encounter_id,
+                                uint8_t encounter_status, 
+                                vector<mod_mob> mobs )
+{
+  require_auth( get_self() );
+
+  encounters_index encounters(get_self(), user.value);
+  auto encounter = encounters.get(encounter_id, "couldn't find encounter");
+  
+  vector<mob> updated_mobs;
+  for (auto& m: mobs) {
+    mob new_mob {
+      m.mob_id,
+      m.mob_name,
+      m.level,
+      m.mob_type,
+      m.last_decision,
+      m.last_decision_hit,
+      m.attack,
+      m.defense,
+      m.mob_data,
+      m.hp,
+      m.max_hp,
+      m.experience,
+      m.worth,
+      m.drop_id
+    };
+    updated_mobs.push_back(new_mob);
+  }
+  
+  auto itr = encounters.find(encounter_id);
+  if (itr != encounters.end()) {
+    encounters.modify( itr, get_self(), [&](auto& e) {
+      e.encounter_status = encounter_status;
+      e.mobs = updated_mobs;
+    });
+  }
+}
+
+ACTION ebonhaven::delencounter( name user, uint64_t encounter_id ) {
+  require_auth( get_self() );
+  encounters_index encounters(get_self(), user.value);
+  characters_index characters(get_self(), user.value);
+  auto encounter = encounters.get(encounter_id, "couldn't find encounter");
+  auto character = characters.get(encounter.character_id, "couldn't find character");
+
+  if (character.status == 4) {
+    auto itr = characters.find(character.character_id);
+    characters.modify( itr, get_self(), [&](auto& c) {
+        c.status = 0;
+    });
+  }
+
+  check(character.owner == user, "account does not own character");
+  auto e_itr = encounters.find(encounter_id);
+  encounters.erase(e_itr);
 }
