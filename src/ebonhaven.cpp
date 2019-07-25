@@ -5,12 +5,16 @@
 #include "character.cpp"
 #include "game.cpp"
 #include "items.cpp"
+#include "skills.cpp"
 #include "token.cpp"
 
-ACTION ebonhaven::printval( name user )
+ACTION ebonhaven::printval( name user, uint64_t x, uint64_t y )
 {
-  print("Total items: ");
-  print(inventory_count(user));
+  mapdata_index mapdata(get_self(), get_self().value);
+  auto m = mapdata.get(1, "couldn't find map");
+  bool is_walkable = is_coordinate_walkable(m.tiles, x, y);
+  print("Is Walkable: ");
+  print(is_walkable);
 }
 
 // Admin
@@ -21,7 +25,7 @@ ACTION ebonhaven::setconfig(string version)
   globals_index globals_table( get_self(), get_self().value );
   asset supply = asset(0.00, symbol(symbol_code("EBON"), 2));
   asset max_supply = asset(1000000000000.00, symbol(symbol_code("EBON"),2));
-  auto base_rates = rates{};
+  rates base_rates;
   base_rates.updated_at = time_point_sec(current_time_point());
   auto global_singleton = globals_table.get_or_create( get_self(),
     globals{ 1, version, symbol_code("EBON"), 1, 1, supply, max_supply, base_rates } );
@@ -42,8 +46,9 @@ EOSIO_DISPATCH(ebonhaven,
   (equipitem)
   (buyability)
   (equipability)
+  (craft)
   (printval)
-  (spawnitem)
+  (spawnitems)
   (spawnability)
   (newencounter)
   (modencounter)
@@ -52,6 +57,7 @@ EOSIO_DISPATCH(ebonhaven,
   (issue)
   (transfernft)
   (burnnft)
+  (modstatus)
   (upsaura)
   (upsability)
   (upseffect)
@@ -61,6 +67,8 @@ EOSIO_DISPATCH(ebonhaven,
   (upsdrop)
   (upsresource)
   (upstreasure)
+  (upsmapdata)
+  (upsrecipe)
   (setconfig)
   (tokenreward)
   (tokenissue)

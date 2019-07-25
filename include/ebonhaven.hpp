@@ -21,46 +21,6 @@ CONTRACT ebonhaven : public contract {
   
   private:
   
-    int random(const int range) {
-      globals_index globals( get_self(), get_self().value );
-      check(globals.exists(), "globals does not exist, setup first");
-      auto globals_singleton = globals.get();
-      
-      int prime = 65537;
-      auto new_seed_value = (globals_singleton.seed + time_point_sec(current_time_point()).utc_seconds) % prime;
-      
-      globals_singleton.seed = new_seed_value;
-      globals.set(globals_singleton, get_self());
-      
-      int random_result = new_seed_value % range;
-      return random_result;
-    }
-    
-    int rate_to_floor(float_t rate, int range) {
-      return (int)floor(rate * range + 0.5);
-    }
-    
-    int inventory_count(name user) {
-      dgoods_index dgood_table(get_self(), get_self().value);
-      auto index_by_owner = dgood_table.get_index<name("byowner")>();
-      auto itr = index_by_owner.lower_bound(user.value);
-      int i = 0;
-      while (itr != index_by_owner.end()) {
-        if (itr->owner == user && itr->equipped != true) {
-          i++;
-        }
-        itr++;
-      }
-      return i;
-    }
-    
-    template <typename Enumeration>
-    auto as_integer(Enumeration const value)
-      -> typename std::underlying_type<Enumeration>::type
-    {
-      return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-    }
-  
     TABLE globals {
       uint8_t     key = 1;
       string      version;
@@ -91,6 +51,7 @@ CONTRACT ebonhaven : public contract {
       uint8_t     level = 1;
       uint64_t    experience = 0;
       position    position;
+      float_t     movement_radius;
       uint8_t     status = 0;
       uint64_t    hp = 0;
       uint64_t    max_hp = 0;
@@ -107,7 +68,7 @@ CONTRACT ebonhaven : public contract {
       uint64_t         character_id;
       skill            profession_skill;
       vector<uint64_t> learned_abilities;
-      vector<uint64_t> learned_recipies;
+      vector<uint64_t> learned_recipes;
       vector<uint64_t> current_quests;
       vector<uint64_t> completed_quests;
       vector<uint64_t> feats;
@@ -149,6 +110,15 @@ CONTRACT ebonhaven : public contract {
       string   effect_data;
       
       uint64_t primary_key() const { return effect_id; }
+
+      const uint64_t get_recipe_id() {
+        auto j = nlohmann::json::parse(effect_data);
+        if (j.count("learn") > 0) {
+          return j["learn"].get<uint64_t>();
+        } else {
+          return 0;
+        }
+      }
       
       const bool can_resurrect() {
         auto j = nlohmann::json::parse(effect_data);
@@ -299,6 +269,30 @@ CONTRACT ebonhaven : public contract {
     
     EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri)(equipped)(attributes) )
     
+    // Scope is user
+    TABLE mapdata {
+      uint64_t         world_zone_id; // primary
+      uint64_t         character_id = 0;
+      position         respawn;
+      vector<tiledata> tiles;
+      vector<trigger>  triggers;
+      vector<mobdata>  mobs;
+      vector<npcdata>  npcs;
+      
+      uint64_t primary_key() const { return world_zone_id; }
+      uint64_t by_character_id() const { return character_id; }
+    };
+
+    TABLE recipe {
+      uint64_t            recipe_id;
+      name                category;
+      name                token_name;
+      uint8_t             profession_lock;
+      uint32_t            min_skill;
+      vector<requirement> requirements;
+
+      uint64_t primary_key() const { return recipe_id; }
+    };
     
     // TABLES
     using globals_index = singleton< "globals"_n, globals >;
@@ -338,6 +332,11 @@ CONTRACT ebonhaven : public contract {
     using dgoods_index = multi_index< "dgood"_n, dgood,
             indexed_by< "byowner"_n, const_mem_fun< dgood, uint64_t, &dgood::get_owner> > >;
             
+    using mapdata_index = multi_index< "mapdata"_n, mapdata,
+            indexed_by< "bycharacterid"_n, const_mem_fun< mapdata, uint64_t, &mapdata::by_character_id> > >;
+
+    using recipes_index = multi_index< "recipes"_n, recipe>;
+            
     void mint( name to, name issuer, name category, name token_name,
                uint64_t issued_supply, string relative_uri, dgood_attributes attributes );
     void add_balance( name owner, name issuer, name category, name token_name,
@@ -358,8 +357,71 @@ CONTRACT ebonhaven : public contract {
                           name payer,
                           uint32_t character_level,
                           encounter s_encounter );
+    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<uint64_t> resource_items ) ;
     uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
     bool is_encounter_over(ebonhaven::character c, ebonhaven::encounter e);
+
+    int random(const int range) {
+      globals_index globals( get_self(), get_self().value );
+      check(globals.exists(), "globals does not exist, setup first");
+      auto globals_singleton = globals.get();
+      
+      int prime = 65537;
+      auto new_seed_value = (globals_singleton.seed + time_point_sec(current_time_point()).utc_seconds) % prime;
+      
+      globals_singleton.seed = new_seed_value;
+      globals.set(globals_singleton, get_self());
+      
+      int random_result = new_seed_value % range;
+      return random_result;
+    }
+    
+    int rate_to_floor(float_t rate, int range) {
+      return (int)floor(rate * range + 0.5);
+    }
+    
+    int inventory_count(name user) {
+      dgoods_index dgood_table(get_self(), get_self().value);
+      auto index_by_owner = dgood_table.get_index<name("byowner")>();
+      auto itr = index_by_owner.lower_bound(user.value);
+      int i = 0;
+      while (itr != index_by_owner.end()) {
+        if (itr->owner == user && itr->equipped != true) {
+          i++;
+        }
+        itr++;
+      }
+      return i;
+    }
+
+    bool is_position_within_target_radius(pair <int, int> position, pair<int, int> target, float radius) {
+      for(int x = target.first - radius; x < target.first + radius; x++) {
+        float yspan = radius * sin(acos(( target.first - x ) / radius));
+        for(int y = target.second - yspan; y < target.second + yspan; y++) {
+            if (x == position.first && y == position.second) {
+                return true;
+            }
+        }
+      }
+      return false;
+    }
+
+    bool is_coordinate_walkable(vector<tiledata> tiles, uint64_t x, uint64_t y) {
+      auto tile = find_if(tiles.begin(), tiles.end(), [&x, &y](const struct tiledata& el){ return el.coordinates.x == x && el.coordinates.y == y; });
+      check(tile != tiles.end(), "tile not found");
+      if (tile != tiles.end()) {
+        nlohmann::json attr = nlohmann::json::parse(tile->attributes);
+        return attr["walkable"].get<bool>();
+      }
+      return false;
+    }
+    
+    template <typename Enumeration>
+    auto as_integer(Enumeration const value)
+      -> typename std::underlying_type<Enumeration>::type
+    {
+      return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+    }
             
   public:
     using contract::contract;
@@ -390,11 +452,15 @@ CONTRACT ebonhaven : public contract {
     ACTION combat( name user, uint64_t encounter_id, uint8_t combat_decision, uint8_t mob_idx );
     
     ACTION claimrewards( name user, uint64_t reward_id, vector<name> selected_items );
+
+    ACTION craft( name user, uint64_t character_id, uint64_t recipe_id );
+
+    ACTION gather( name user, uint64_t character_id );
     
-    ACTION printval( name user );
+    ACTION printval( name user, uint64_t x, uint64_t y );
     
     // Admin
-    ACTION spawnitem( name to, name token_name );
+    ACTION spawnitems( name to, name token_name, uint64_t quantity );
     
     //Admin
     ACTION spawnability( name user, uint64_t character_id, uint64_t ability_id );
@@ -437,6 +503,9 @@ CONTRACT ebonhaven : public contract {
     ACTION burnnft(name owner,
                    vector<uint64_t> dgood_ids);
     
+    // Admin
+    ACTION modstatus( name user, uint64_t character_id, uint8_t status );
+
     // Admin
     ACTION upsaura( uint64_t aura_id,
                     string aura_name, 
@@ -506,6 +575,23 @@ CONTRACT ebonhaven : public contract {
                      
     // Admin
     ACTION upstreasure( uint64_t world_zone_id, vector<item_drop> drops );
+    
+    // Admin
+    ACTION upsmapdata( uint64_t world_zone_id,
+                       name user,
+                       uint64_t character_id,
+                       position respawn,
+                       vector<tiledata> tiles,
+                       vector<trigger> triggers,
+                       vector<mobdata> mobs,
+                       vector<npcdata> npcs );
+
+    ACTION upsrecipe( uint64_t recipe_id,
+                      name category,
+                      name token_name,
+                      uint8_t profession_lock,
+                      uint32_t min_skill,
+                      vector<requirement> requirements );
     
     // Admin                     
     ACTION setconfig(string version);

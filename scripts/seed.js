@@ -9,6 +9,8 @@ const drops = require('../data/drops.json').drops;
 const mobs = require('../data/mobs.json').mobs;
 const resources = require('../data/resources.json').resources;
 const treasures = require('../data/treasures.json').treasures;
+const mapdata = require('../data/mapdata.json').mapdata;
+const recipes = require('../data/recipes.json').recipes;
 const argv = require('yargs').argv
 
 class Seeder {
@@ -261,6 +263,42 @@ class Seeder {
         });
         this.eos.actions(actions);
     }
+
+    seedMapdata() {
+        console.log("Seeding mapdata...");
+        let actions = [];
+        mapdata.forEach((m) => {
+            let action = {
+                account: "ebonhavencom",
+                name: "upsmapdata",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: m
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
+
+    seedRecipes() {
+        console.log("Seeding recipes...");
+        let actions = [];
+        recipes.forEach((r) => {
+            let action = {
+                account: "ebonhavencom",
+                name: "upsrecipe",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: r
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
 };
 
 const seeder = new Seeder;
@@ -302,6 +340,12 @@ switch(argv._[0]) {
     case "treasures":
         seeder.seedTreasures();
         break;
+    case "mapdata":
+        seeder.seedMapdata();
+        break;
+    case "recipes":
+        seeder.seedRecipes();
+        break;
     case "retireall":
         seeder.retireAllItems();
         break;
@@ -317,5 +361,7 @@ switch(argv._[0]) {
         seeder.seedMobs();
         seeder.seedResources();
         seeder.seedTreasures();
+        seeder.seedMapdata();
+        seeder.seedRecipes();
         break;
 }

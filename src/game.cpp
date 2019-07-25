@@ -15,13 +15,32 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
   check(character.status == 0, "status does not allow movement");
   check(character.hp > 0, "cannot move");
   
+  // Check if in same position
   bool same_position = false;
-  if (new_position.world == character.position.world && 
-      new_position.zone == character.position.zone &&
+  if (new_position.world_zone_id == character.position.world_zone_id && 
       new_position.x == character.position.x &&
       new_position.y == character.position.y ) {
     check(false, "cannot move to same position");
   }
+
+  // Check if within movement radius
+  auto current = make_pair(character.position.x, character.position.y);
+  auto target = make_pair(new_position.x, new_position.y);
+  if (!is_position_within_target_radius(current, target, character.movement_radius)) {
+    check(false, "target outside movement radius");
+  }
+
+  // Check if tile exists and walkable
+  mapdata_index mapdata(get_self(), user.value);
+  auto md = find_if(mapdata.begin(), mapdata.end(),
+    [&character](const struct mapdata& el){ return el.world_zone_id == character.position.world_zone_id &&
+                                            el.character_id == character.character_id; }
+                  );
+  check(md != mapdata.end(), "mapdata not found");
+  bool is_walkable = is_coordinate_walkable(md->tiles, new_position.x, new_position.y);
+  check(is_walkable, "cannot move to position");
+
+  character.position = new_position;
   
   int range = 1000;
   auto num = random(range);
@@ -41,7 +60,7 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
     character.status = 6;
   } else if (num > LOOT_MAX && num <= TREASURE_MAX) {
     print("Outcome is: TREASURE");
-    //generate_treasure(user, character);
+    // generate_treasure(user, character);
     character.status = 5;
   } else if (num > TREASURE_MAX && num <= TRAP_MAX) {
     print("Outcome is: TRAP");
@@ -56,7 +75,7 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
     // Generate encounter
     character.status = 4;
     vector<uint64_t> v = { 101 };
-    //generate_encounter(user, user, character, v);
+    generate_encounter(user, user, character, v);
     print("Outcome is: COMBAT");
   } else {
     print("Outcome is: NONE");

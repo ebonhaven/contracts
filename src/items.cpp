@@ -14,10 +14,10 @@ ACTION ebonhaven::create( name category,
 
   dasset m_supply;
   if ( fungible == true ) {
-      m_supply.from_string(max_supply);
+    m_supply.from_string(max_supply);
   } else {
-      m_supply.from_string(max_supply, 0);
-      check(m_supply.amount >= 1, "max_supply for nft must be at least 1");
+    m_supply.from_string(max_supply, 0);
+    check(m_supply.amount >= 1, "max_supply for nft must be at least 1");
   }
 
   // get category_name_id
@@ -31,9 +31,9 @@ ACTION ebonhaven::create( name category,
   // category hasn't been created before, create it
 
   if ( existing_category == category_table.end() ) {
-      category_table.emplace( get_self(), [&]( auto& cat ) {
-          cat.category = category;
-      });
+    category_table.emplace( get_self(), [&]( auto& cat ) {
+      cat.category = category;
+    });
   }
 
   stats_index stats_table( get_self(), category.value );
@@ -41,17 +41,17 @@ ACTION ebonhaven::create( name category,
   check( existing_token == stats_table.end(), "Token with category and token_name exists" );
   // token type hasn't been created, create it
   stats_table.emplace( get_self(), [&]( auto& stats ) {
-      stats.category_name_id = category_name_id;
-      stats.issuer = name("ebonhavencom");
-      stats.token_name = token_name;
-      stats.fungible = fungible;
-      stats.burnable = burnable;
-      stats.transferable = transferable;
-      stats.current_supply = 0;
-      stats.issued_supply = 0;
-      stats.attributes = attributes;
-      stats.base_uri = base_uri;
-      stats.max_supply = m_supply;
+    stats.category_name_id = category_name_id;
+    stats.issuer = name("ebonhavencom");
+    stats.token_name = token_name;
+    stats.fungible = fungible;
+    stats.burnable = burnable;
+    stats.transferable = transferable;
+    stats.current_supply = 0;
+    stats.issued_supply = 0;
+    stats.attributes = attributes;
+    stats.base_uri = base_uri;
+    stats.max_supply = m_supply;
   });
 
   // successful creation of token, update category_name_id to reflect
@@ -81,7 +81,7 @@ ACTION ebonhaven::issue(name to,
   dasset q;
   if (dgood_stats.fungible == false) {
     // mint nft
-    q.from_string("1", 0);
+    q.from_string(quantity);
     // check cannot issue more than max supply, careful of overflow of uint
     check( q.amount <= (dgood_stats.max_supply.amount - dgood_stats.current_supply), "Cannot issue more than max supply" );
     
@@ -91,9 +91,11 @@ ACTION ebonhaven::issue(name to,
     attr.durability = dgood_stats.attributes.max_durability;
     attr.creator_name = creator_name;
     attr.created_at = time_point_sec(current_time_point());
-  
-    mint(to, dgood_stats.issuer, category, token_name,
+
+    for (int i = 0; i < q.amount; i++ ) {
+      mint(to, dgood_stats.issuer, category, token_name,
          dgood_stats.issued_supply, relative_uri, attr);
+    }
     add_balance(to, dgood_stats.issuer, category, token_name, dgood_stats.category_name_id, q);
   } else {
     // issue fungible
@@ -195,12 +197,12 @@ ACTION ebonhaven::burnnft(name owner, vector<uint64_t> dgood_ids)
 
 // Private
 void ebonhaven::mint(name to,
-                        name issuer,
-                        name category,
-                        name token_name,
-                        uint64_t issued_supply,
-                        string relative_uri,
-                        dgood_attributes attributes)
+                     name issuer,
+                     name category,
+                     name token_name,
+                     uint64_t issued_supply,
+                     string relative_uri,
+                     dgood_attributes attributes)
 {
 
   dgoods_index dgood_table( get_self(), get_self().value);
@@ -210,22 +212,22 @@ void ebonhaven::mint(name to,
   }
   if ( relative_uri.empty() ) {
     dgood_table.emplace( issuer, [&]( auto& dg) {
-        dg.id = dgood_id;
-        dg.serial_number = issued_supply + 1;
-        dg.owner = to;
-        dg.category = category;
-        dg.token_name = token_name;
-        dg.attributes = attributes;
+      dg.id = dgood_id;
+      dg.serial_number = issued_supply + 1;
+      dg.owner = to;
+      dg.category = category;
+      dg.token_name = token_name;
+      dg.attributes = attributes;
     });
   } else {
     dgood_table.emplace( issuer, [&]( auto& dg ) {
-        dg.id = dgood_id;
-        dg.serial_number = issued_supply + 1;
-        dg.owner = to;
-        dg.category = category;
-        dg.token_name = token_name;
-        dg.relative_uri = relative_uri;
-        dg.attributes = attributes;
+      dg.id = dgood_id;
+      dg.serial_number = issued_supply + 1;
+      dg.owner = to;
+      dg.category = category;
+      dg.token_name = token_name;
+      dg.relative_uri = relative_uri;
+      dg.attributes = attributes;
     });
   }
 }

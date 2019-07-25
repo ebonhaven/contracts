@@ -67,7 +67,9 @@ namespace types {
   enum class effect_type: uint8_t {
     APPLYEFFECT = 0,
     ADDAURA = 1,
-    ITEMEFFECT = 2
+    ITEMEFFECT = 2,
+    LEARNABILITY = 3,
+    LEARNRECIPE = 4
   };
   
   enum class mob_type: uint8_t {
@@ -95,11 +97,10 @@ namespace types {
   };
   
   struct position {
-    uint8_t world = 0;
-    uint8_t zone = 0;
-    uint8_t x = 0;
-    uint8_t y = 0;
-    uint8_t orientation = 0;
+    uint64_t world_zone_id = 1;
+    uint8_t  x = 0;
+    uint8_t  y = 0;
+    uint8_t  orientation = 0;
   };
   
   struct stats {
@@ -178,6 +179,40 @@ namespace types {
     uint64_t ring2;
     uint64_t trinket1;
     uint64_t trinket2;
+  };
+
+  struct coords {
+    uint64_t x;
+    uint64_t y;
+  };
+  
+  struct tiledata {
+    coords coordinates;
+    string attributes;
+  };
+  
+  struct trigger {
+    coords coordinates;
+    float_t radius;
+    string attributes;
+  };
+  
+  struct mobdata {
+    coords coordinates;
+    uint8_t status;
+    float_t radius;
+    string attributes;
+  };
+  
+  struct npcdata {
+    coords coordinates;
+    float_t radius;
+    string attributes;
+  };
+
+  struct requirement {
+    name token_name;
+    uint64_t quantity;
   };
   
 }

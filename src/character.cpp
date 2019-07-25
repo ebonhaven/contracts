@@ -40,11 +40,25 @@ ACTION ebonhaven::newcharacter( name     user,
     c.gender = gender;
     c.profession = profession;
     c.race = race;
+    c.movement_radius = 3.5;
     c.hp = base.base_hp;
     c.max_hp = base.base_hp;
     c.attack = base.base_attack;
     c.defense = base.base_defense;
     c.stats = base.base_stats;
+  });
+
+  mapdata_index mapdata(get_self(), get_self().value);
+  auto map = mapdata.get(1, "could't find map");
+  mapdata_index u_mapdata(get_self(), user.value);
+  u_mapdata.emplace( user, [&](auto &m) {
+    m.world_zone_id = map.world_zone_id;
+    m.character_id = character_id;
+    m.respawn = map.respawn;
+    m.tiles = map.tiles;
+    m.triggers = map.triggers;
+    m.mobs = m.mobs;
+    m.npcs = m.npcs;
   });
   
   charhistory_index charhistory(get_self(), user.value);
@@ -148,6 +162,21 @@ ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
       rewards.erase(itr);
     }
   }
+
+  mapdata_index mapdata(get_self(), user.value);
+  vector<uint64_t> mapdata_to_delete;
+  for (auto& m: mapdata) {
+    if (m.character_id == character_id) {
+      mapdata_to_delete.push_back(m.world_zone_id);
+    }
+  }
+
+  for (uint64_t m_del: mapdata_to_delete) {
+    auto itr = mapdata.find(m_del);
+    if (itr != mapdata.end()) {
+      mapdata.erase(itr);
+    }
+  }
   
   auto itr = characters.find(character_id);
   characters.erase(itr);
@@ -183,12 +212,34 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
       check(!effect.can_resurrect(), "character alive. cannot use item");
     }
     
+    // Apply effect to character
     if (effect.effect_type == 0) {
       apply_effect_to_character( effect, c );
       auto itr = characters.find(character_id);
       characters.modify( itr, user, [&](auto& mod) {
           mod = c;
       });
+    }
+
+    // Learn recipe
+    if (effect.effect_type == 4) {
+      charhistory_index charhistory(get_self(), user.value);
+      recipes_index recipes(get_self(), get_self().value);
+      auto history = charhistory.get(character_id, "couldn't find history");
+      auto recipe = recipes.get(effect.get_recipe_id(), "couldn't find recipe");
+      if (recipe.profession_lock > 0) {
+        check(c.profession == recipe.profession_lock, "character profession cannot learn this recipe");
+      }
+      check(history.profession_skill.craft >= recipe.min_skill, "crafting skill not high enough");
+      auto h_itr = charhistory.find(character_id);
+      bool found = (find(history.learned_recipes.begin(), history.learned_recipes.end(), recipe.recipe_id) != history.learned_recipes.end());
+      check(found == false, "recipe already learned");
+      history.learned_recipes.push_back(recipe.recipe_id);
+      if ( h_itr != charhistory.end() ) {
+        charhistory.modify( h_itr, user, [&](auto& h) {
+          h.learned_recipes = history.learned_recipes;
+        });
+      }
     }
 
     if (stat.attributes.is_consumable()) {

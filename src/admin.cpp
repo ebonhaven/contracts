@@ -1,6 +1,17 @@
 #include <ebonhaven.hpp>
 
 // Admin
+ACTION ebonhaven::modstatus( name user, uint64_t character_id, uint8_t status )
+{
+  require_auth(get_self());
+  characters_index characters(get_self(), user.value);
+  auto itr = characters.find(character_id);
+  characters.modify( itr, get_self(), [&](auto& c) {
+    c.status = status;
+  });
+}
+
+// Admin
 ACTION ebonhaven::upsaura( uint64_t aura_id,
                               string aura_name, 
                               string aura_description,
@@ -280,7 +291,7 @@ ACTION ebonhaven::upstreasure( uint64_t world_zone_id, vector<item_drop> drops )
 }
 
 // Admin
-ACTION ebonhaven::spawnitem( name to, name token_name )
+ACTION ebonhaven::spawnitems( name to, name token_name, uint64_t quantity )
 {
   require_auth( get_self() );
   
@@ -292,7 +303,7 @@ ACTION ebonhaven::spawnitem( name to, name token_name )
     permission_level{ get_self(), name("active") },
     name("ebonhavencom"),
     name("issue"),
-    make_tuple( to, name("ebonhavencom"), token_name, string("1"), string("1"), string(""), string("issued from ebonhavencom"))
+    make_tuple( to, name("ebonhavencom"), token_name, to_string(quantity), string("1"), string(""), string("issued from ebonhavencom"))
   ).send();
 }
 
@@ -399,4 +410,135 @@ ACTION ebonhaven::delencounter( name user, uint64_t encounter_id ) {
   check(character.owner == user, "account does not own character");
   auto e_itr = encounters.find(encounter_id);
   encounters.erase(e_itr);
+}
+
+ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
+                              name user,
+                              uint64_t character_id,
+                              position respawn,
+                              vector<tiledata> tiles,
+                              vector<trigger> triggers,
+                              vector<mobdata> mobs,
+                              vector<npcdata> npcs )
+{
+  require_auth( get_self() );
+  
+  vector<tiledata> updated_tiles;
+  for (auto& ti: tiles) {
+    tiledata new_tile {
+      ti.coordinates,
+      ti.attributes
+    };
+    updated_tiles.push_back(new_tile);
+  }
+  
+  vector<trigger> updated_triggers;
+  for (auto& tr: triggers) {
+    trigger new_trigger {
+      tr.coordinates,
+      tr.radius,
+      tr.attributes
+    };
+    updated_triggers.push_back(new_trigger);
+  }
+  
+  vector<mobdata> updated_mobs;
+  for (auto& m: mobs) {
+    mobdata new_mob {
+      m.coordinates,
+      m.status,
+      m.radius,
+      m.attributes
+    };
+    updated_mobs.push_back(new_mob);
+  }
+  
+  vector<npcdata> updated_npcs;
+  for (auto& n: npcs) {
+    npcdata new_npc {
+      n.coordinates,
+      n.radius,
+      n.attributes
+    };
+    updated_npcs.push_back(new_npc);
+  }
+  
+  if ( user.value == get_self().value ) {
+    mapdata_index mapdata(get_self(), get_self().value);
+    auto itr = mapdata.find(world_zone_id);
+    if ( itr == mapdata.end() ) {
+      mapdata.emplace( get_self(), [&](auto& m) {
+        m.world_zone_id = world_zone_id;
+        m.respawn = respawn;
+        m.tiles = updated_tiles;
+        m.triggers = updated_triggers;
+        m.mobs = updated_mobs;
+        m.npcs = updated_npcs;
+      });
+    } else {
+      mapdata.modify( itr, get_self(), [&](auto& m) {
+        m.world_zone_id = world_zone_id;
+        m.respawn = respawn;
+        m.tiles = updated_tiles;
+        m.triggers = updated_triggers;
+        m.mobs = updated_mobs;
+        m.npcs = updated_npcs;
+      });
+    }
+  } else {
+    mapdata_index mapdata( user, user.value );
+    characters_index characters( user, user.value );
+    auto itr = mapdata.find( world_zone_id );
+    check( itr != mapdata.end(), "mapdata not found");
+    auto c_itr = characters.find(character_id);
+    check(c_itr != characters.end(), "character not found");
+    mapdata.modify( itr, user, [&](auto& m) {
+      m.world_zone_id = world_zone_id;
+      m.respawn = respawn;
+      m.tiles = updated_tiles;
+      m.triggers = updated_triggers;
+      m.mobs = updated_mobs;
+      m.npcs = updated_npcs;
+    });
+  }
+}
+
+ACTION ebonhaven::upsrecipe( uint64_t recipe_id,
+                             name category,
+                             name token_name,
+                             uint8_t profession_lock,
+                             uint32_t min_skill,
+                             vector<requirement> requirements )
+{
+  require_auth(get_self());
+
+  vector<requirement> updated_requirements;
+  for (auto& r: requirements) {
+    requirement new_req {
+      r.token_name,
+      r.quantity
+    };
+    updated_requirements.push_back(new_req);
+  }
+
+  recipes_index recipes( get_self(), get_self().value );
+  auto itr = recipes.find(recipe_id);
+  if (itr != recipes.end()) {
+    recipes.modify( itr, get_self(), [&](auto& r) {
+      r.category = category;
+      r.token_name = token_name;
+      r.profession_lock = profession_lock;
+      r.min_skill = min_skill;
+      r.requirements = updated_requirements;
+    });
+  } else {
+    recipes.emplace( get_self(), [&](auto& r) {
+      r.recipe_id = recipe_id;
+      r.category = category;
+      r.token_name = token_name;
+      r.profession_lock = profession_lock;
+      r.min_skill = min_skill;
+      r.requirements = updated_requirements;
+    });
+  }
 }

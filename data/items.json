@@ -94,6 +94,29 @@
     },
     {
       "category": "ebonhavencom",
+      "token_name": "recipe1",
+      "fungible": false,
+      "burnable": true,
+      "transferable": true,
+      "attributes": {
+        "item_name": "Recipe: Meat Cleaver",
+        "item_description": "",
+        "item_binding": 0,
+        "level_requirement": 1,
+        "quality": 3,
+        "slot": 0,
+        "item_type": 8,
+        "profession_lock": 0,
+        "max_durability": 0,
+        "repair_cost": "0.00 EBON",
+        "auras": [],
+        "effects": [3001]
+      },
+      "base_uri": "http://www.google.com",
+      "max_supply": 2000
+    },
+    {
+      "category": "ebonhavencom",
       "token_name": "resource1",
       "fungible": false,
       "burnable": true,

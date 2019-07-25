@@ -1,11 +1,12 @@
 {
-  "main": "src\\ebonhaven.cpp",
+  "main": "src/ebonhaven.cpp",
   "contract": "ebonhaven",
   "include": "",
-  "cdt": "",
+  "resource": "",
+  "cdt": "cmd",
   "output": "",
   "scripts": {
-    "build": ""
+    "build": "eosio-cpp -abigen -I include -contract ebonhaven -o ebonhaven.wasm src/ebonhaven.cpp"
   },
   "deploy": {
     "target": "both",
