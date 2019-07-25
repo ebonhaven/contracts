@@ -1,0 +1,21 @@
+{
+  "main": "src/ebonhaven.cpp",
+  "contract": "ebonhaven",
+  "include": "",
+  "resource": "",
+  "cdt": "cmd",
+  "output": "",
+  "scripts": {
+    "build": "eosio-cpp -abigen -I include -contract ebonhaven -o ebonhaven.wasm src/ebonhaven.cpp"
+  },
+  "deploy": {
+    "target": "both",
+    "mainnet": "",
+    "kylin": "",
+    "jungle": "",
+    "local": ""
+  },
+  "test": {
+    "npmClient": ""
+  }
+}

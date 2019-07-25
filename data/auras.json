@@ -1,0 +1,31 @@
+{
+    "auras": [
+        {
+            "aura_id": 1001,
+            "aura_name": "Staff Aura",
+            "aura_description": "",
+            "aura_type": 0,
+            "is_hidden": 0,
+            "cooldown": 1,
+            "aura_data": "{\"damage\": 10, \"attack\":{\"spell\":10}}"
+        },
+        {
+            "aura_id": 1002,
+            "aura_name": "Wand Aura",
+            "aura_description": "",
+            "aura_type": 0,
+            "is_hidden": 0,
+            "cooldown": 1,
+            "aura_data": "{\"damage\": 10, \"attack\":{\"spell\":5}}"
+        },
+        {
+            "aura_id": 1100,
+            "aura_name": "Helm Aura",
+            "aura_description": "",
+            "aura_type": 0,
+            "is_hidden": 0,
+            "cooldown": 1,
+            "aura_data": "{\"attack\":{\"physical\":15}}"
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "effects": [
+        {
+            "effect_id": 1001,
+            "effect_type": 0,
+            "chance": 1,
+            "cooldown": 1,
+            "effect_data": "{\"hp_delta\":200, \"target\":1}"
+        },
+        {
+            "effect_id": 1002,
+            "effect_type": 0,
+            "chance": 1,
+            "cooldown": 1,
+            "effect_data": "{\"resurrect\":true, \"hp_delta\":200, \"target\":1}"
+        },
+        {
+            "effect_id": 3001,
+            "effect_type": 4,
+            "chance": 1,
+            "cooldown": 1,
+            "effect_data": "{\"learn\":1001}"
+        },
+        {
+            "effect_id": 9001,
+            "effect_type": 0,
+            "chance": 1,
+            "cooldown": 1,
+            "effect_data": "{\"unlocks\":[\"treasure1\"]}"
+        }
+    ]
+}

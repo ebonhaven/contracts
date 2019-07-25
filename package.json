@@ -1,0 +1,22 @@
+{
+  "name": "ebonhaven-contract",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "seed": "node scripts/seed.js",
+    "seed:accounts": "node scripts/seed.js accounts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "eosjs": "^20.0.0-beta3",
+    "eosjs-ecc": "^4.0.4",
+    "mocha": "^6.1.4",
+    "node-fetch": "^2.6.0",
+    "util": "^0.12.0",
+    "yargs": "^13.2.4"
+  }
+}

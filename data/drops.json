@@ -1,0 +1,17 @@
+{
+  "drops": [
+    {
+      "drop_id": 101,
+      "item_drops": [
+        {
+          "percentage": 100.0,
+          "token_name": "weapon1"
+        },
+        {
+          "percentage": 25.0,
+          "token_name": "weapon2"
+        }
+      ]
+    }
+  ]
+}

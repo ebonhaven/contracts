@@ -1,0 +1,17 @@
+{
+  "recipes": [
+    {
+      "recipe_id": 1001,
+      "category": "ebonhavencom",
+      "token_name": "weapon1",
+      "profession_lock": 0,
+      "min_skill": 1,
+      "requirements": [
+        {
+          "token_name": "resource1",
+          "quantity": 2
+        }
+      ]
+    }
+  ]
+}
