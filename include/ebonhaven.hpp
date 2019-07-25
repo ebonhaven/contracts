@@ -357,7 +357,7 @@ CONTRACT ebonhaven : public contract {
                           name payer,
                           uint32_t character_level,
                           encounter s_encounter );
-    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<uint64_t> resource_items ) ;
+    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<name> resource_items ) ;
     uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
     bool is_encounter_over(ebonhaven::character c, ebonhaven::encounter e);
 

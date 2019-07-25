@@ -47,6 +47,7 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
   characters_index characters(get_self(), user.value);
   charhistory_index charhistory(get_self(), user.value);
   auto character = characters.get(character_id, "couldn't find character");
+  check(character.status == 2, "character status doesn't allow gathering");
   auto history = charhistory.get(character_id, "couldn't find history");
   resources_index resources(get_self(), character.profession);
   auto resource = resources.get(character.position.world_zone_id, "couldn't find resource");
@@ -55,7 +56,8 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
 
   auto roll = 100;
   auto num = random(roll);
-  vector<uint64_t> reward_items;
+  vector<name> reward_items;
+  
   for (auto& drop: resource.drops) {
     auto r = rate_to_floor(drop.percentage, roll);
     uint8_t amt = drop.min_items;
@@ -64,8 +66,8 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
       amt = random(range) + drop.min_items;
     }
     if (num <= r) {
-      for (i = 0; i < amt; i++) {
-        reward_items.push_back(drop.token_name)
+      for (int i = 0; i < amt; i++) {
+        reward_items.push_back(drop.token_name);
       }
     }
   }
@@ -85,7 +87,7 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
   }
 }
 
-void ebonhaven::generate_resource_reward( name user, name payer, uint64_t character_it, vector<uint64_t> resource_items ) {
+void ebonhaven::generate_resource_reward( name user, name payer, uint64_t character_id, vector<name> resource_items ) {
   rewards_index rewards(get_self(), user.value);
   stats_index stats_table(get_self(), get_self().value);
 
@@ -96,5 +98,5 @@ void ebonhaven::generate_resource_reward( name user, name payer, uint64_t charac
   rew.items = resource_items;
   rewards.emplace( payer, [&](auto& r) {
     r = rew;
-  })
+  });
 }

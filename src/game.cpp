@@ -379,9 +379,9 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
   for (auto const& item: reward.items) {
     stats_index stats(get_self(), name("ebonhavencom").value);
     auto itr = stats.find(item.value);
-    bool i_found = find(selected_items.begin(), selected_items.end(), item) != selected_items.end();
+    auto i_itr = find(selected_items.begin(), selected_items.end(), item);
 
-    if (i_found) {
+    if (i_itr != selected_items.end()) {
       check(inventory_count(user) <= acct.max_inventory - 1, "not enough inventory space");
       action(
         permission_level{ get_self(), name("active") },
@@ -389,6 +389,7 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
         name("issue"),
         make_tuple( user, name("ebonhavencom"), item, string("1"), string("1"), string(""), string("issued from ebonhavencom"))
       ).send();
+      selected_items.erase(i_itr);
     }
   }
 

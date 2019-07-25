@@ -47,6 +47,7 @@ EOSIO_DISPATCH(ebonhaven,
   (buyability)
   (equipability)
   (craft)
+  (gather)
   (printval)
   (spawnitems)
   (spawnability)
