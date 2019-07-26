@@ -90,6 +90,10 @@ namespace item_attributes {
     const bool is_key() {
       return (item_type == 11 ? true : false);
     }
+
+    const bool is_chest() {
+      return (item_type == 10 ? true : false);
+    }
     
     const bool is_consumable() {
       return (item_type == 8 || item_type == 11 ? true : false);

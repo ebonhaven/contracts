@@ -66,10 +66,11 @@ namespace types {
   
   enum class effect_type: uint8_t {
     APPLYEFFECT = 0,
-    ADDAURA = 1,
+    APPLYAURA = 1,
     ITEMEFFECT = 2,
     LEARNABILITY = 3,
-    LEARNRECIPE = 4
+    LEARNRECIPE = 4,
+    DROPREWARD = 5
   };
   
   enum class mob_type: uint8_t {

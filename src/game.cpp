@@ -60,7 +60,7 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
     character.status = 6;
   } else if (num > LOOT_MAX && num <= TREASURE_MAX) {
     print("Outcome is: TREASURE");
-    // generate_treasure(user, character);
+    generate_treasure(user, user, character);
     character.status = 5;
   } else if (num > TREASURE_MAX && num <= TRAP_MAX) {
     print("Outcome is: TRAP");
@@ -175,7 +175,7 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
         if (is_encounter_over(character, encounter)) {
           encounter.encounter_status = 1;
           character.status = 0;
-          generate_reward( user, user, character.level, encounter );  
+          generate_combat_reward( user, user, character.level, encounter );  
         }
         
       }
@@ -324,30 +324,28 @@ uint64_t ebonhaven::calculate_player_attack_damage( name user,
 
 void ebonhaven::generate_encounter( name user, name payer, ebonhaven::character& character, vector<uint64_t> mob_ids)
 {
-    encounters_index encounters(get_self(), user.value);
-    check(character.status == 4, "character not in combat");
-    for (auto& enc: encounters) {
-        check(enc.character_id != character.character_id, "encounter already exists for character");
-    }
+  encounters_index encounters(get_self(), user.value);
+  check(character.status == 4, "character not in combat");
+  for (auto& enc: encounters) {
+    check(enc.character_id != character.character_id, "encounter already exists for character");
+  }
 
-    mobs_index mobs(get_self(), get_self().value);
-    vector<mob> v_mobs = {};
-    for (uint8_t i = 0; i < mob_ids.size(); i++) {
-      auto mob = mobs.get(mob_ids[i], "can't find mob");
-      v_mobs.push_back(mob);
-    }
-    
-    ebonhaven::encounter enc;
-    enc.encounter_id = encounters.available_primary_key();
-    if (enc.encounter_id == 0) {
-      enc.encounter_id = 1;
-    }
-    enc.character_id = character.character_id;
-    enc.mobs = v_mobs;
+  mobs_index mobs(get_self(), get_self().value);
+  vector<mob> v_mobs = {};
+  for (uint8_t i = 0; i < mob_ids.size(); i++) {
+    auto mob = mobs.get(mob_ids[i], "can't find mob");
+    v_mobs.push_back(mob);
+  }
+  
+  ebonhaven::encounter enc;
+  enc.encounter_id = encounters.available_primary_key();
+  if (enc.encounter_id == 0) { enc.encounter_id = 1; }
+  enc.character_id = character.character_id;
+  enc.mobs = v_mobs;
 
-    encounters.emplace( payer, [&]( auto& e ) {
-      e = enc;
-    });
+  encounters.emplace( payer, [&]( auto& e ) {
+    e = enc;
+  });
 };
 
 ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> selected_items)
@@ -355,17 +353,10 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
   require_auth( user );
 
   accounts_index accounts(get_self(), user.value );
-  characters_index characters(get_self(), user.value );
   rewards_index rewards(get_self(), user.value);
   encounters_index encounters(get_self(), user.value);
   auto reward = rewards.get( reward_id, "reward not found" );
   auto acct = accounts.get( user.value, "couldn't find account");
-  auto character = characters.get( reward.character_id, "couldn't find character" );
-  check(character.owner == user, "character does not belong to user");
-
-  if (reward.experience > 0) {
-    character.experience += reward.experience;
-  }
 
   if (reward.worth.amount > 0) {
     action(
@@ -399,19 +390,23 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
   }
   
   // Update character
-  auto c_itr = characters.find(reward.character_id);
-  characters.modify(c_itr, user, [&](auto& c) {
-    c.experience = character.experience;
-  });
+  if (reward.character_id > 0 && reward.experience > 0) {
+    characters_index characters(get_self(), user.value );
+    auto character = characters.get( reward.character_id, "couldn't find character" );
+    auto c_itr = characters.find(reward.character_id);
+    characters.modify(c_itr, user, [&](auto& c) {
+      c.experience += reward.experience;
+    });
+  }
   
   auto r_itr = rewards.find(reward_id);
   rewards.erase(r_itr);
 }
 
-void ebonhaven::generate_reward( name user,
-                                 name payer,
-                                 uint32_t character_level,
-                                 encounter s_encounter )
+void ebonhaven::generate_combat_reward( name user,
+                                        name payer,
+                                        uint32_t character_level,
+                                        encounter s_encounter )
 {
   drops_index drops(get_self(), get_self().value);
   rewards_index rewards(get_self(), user.value);
@@ -425,6 +420,10 @@ void ebonhaven::generate_reward( name user,
     auto roll = random(100);
     print(" Comp roll: ", roll);
     auto m_drop = drops.get(mob.drop_id, "couldn't find drop");
+    if (m_drop.min_worth.amount > 0) {
+      auto amt = random(m_drop.max_worth.amount - m_drop.min_worth.amount);
+      total_reward.amount += amt;
+    }
     for (auto& drop: m_drop.drops) {
       uint8_t perc = abs(floor((100 * drop.percentage) / 100));
       // print(" Rolled on drop: ", perc);
@@ -449,7 +448,6 @@ void ebonhaven::generate_reward( name user,
   rewards.emplace(payer, [&](auto& reward) {
     reward = r;
   });
-  
 }
 
 // TODO: No experience if mob is more than 4 levels below character
@@ -471,4 +469,38 @@ bool ebonhaven::is_encounter_over(character c, encounter e) {
     return true;
   }
   return false;
+}
+
+name ebonhaven::roll_treasure( ebonhaven::character& character ) {
+  name token_name;
+  bool found = false;
+  treasures_index treasures(get_self(), get_self().value);
+  auto t = treasures.get(character.position.world_zone_id, "couldn't find treasure");
+
+  auto range = 100;
+  auto roll = random(range);
+  
+  multimap<int, name> dmap;
+  for (auto itr = t.drops.begin(); itr != t.drops.end(); itr++) {
+    int p = percentage_of_range(itr->percentage, range);
+    dmap.insert({ p, itr->token_name });
+  }
+
+  int i = 0;
+  for (auto m = dmap.begin(); m != dmap.end(); m++) {
+    i += m->first;
+    if (roll <= i && found != true) {
+      token_name = m->second;
+      found = true;
+    }   
+  }
+
+  return token_name;
+}
+
+void ebonhaven::generate_treasure( name user, name payer, ebonhaven::character& character ) {
+  rewards_index rewards(get_self(), user.value);
+  name treasure_item = roll_treasure( character );
+  vector<name> items = { treasure_item };
+  generate_resource_reward( user, payer, character.character_id, items );
 }

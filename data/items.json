@@ -225,7 +225,7 @@
         "max_durability": 0,
         "repair_cost": "1.00 EBON",
         "auras": [],
-        "effects": []
+        "effects": [9002]
       },
       "base_uri": "http://www.google.com",
       "max_supply": 10000

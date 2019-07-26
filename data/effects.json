@@ -23,10 +23,17 @@
         },
         {
             "effect_id": 9001,
-            "effect_type": 0,
+            "effect_type": 2,
             "chance": 1,
             "cooldown": 1,
             "effect_data": "{\"unlocks\":[\"treasure1\"]}"
+        },
+        {
+            "effect_id": 9002,
+            "effect_type": 5,
+            "chance": 1,
+            "cooldown": 1,
+            "effect_data": "{\"drop\":3001}"
         }
     ]
 }

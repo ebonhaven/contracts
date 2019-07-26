@@ -2,6 +2,8 @@
   "drops": [
     {
       "drop_id": 101,
+      "min_worth": "0.00 EBON",
+      "max_worth": "0.00 EBON",
       "item_drops": [
         {
           "percentage": 100.0,
@@ -10,6 +12,17 @@
         {
           "percentage": 25.0,
           "token_name": "weapon2"
+        }
+      ]
+    },
+    {
+      "drop_id": 3001,
+      "min_worth": "1.00 EBON",
+      "max_worth": "4.00 EBON",
+      "item_drops": [
+        {
+          "percentage": 100.0,
+          "token_name": "recipe1"
         }
       ]
     }

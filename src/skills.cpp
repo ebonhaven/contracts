@@ -4,9 +4,12 @@
 ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
 {
   require_auth( user );
+  characters_index characters(get_self(), user.value);
   charhistory_index charhistory(get_self(), user.value);
   recipes_index recipes(get_self(), get_self().value);
   dgoods_index dgoods(get_self(), get_self().value);
+  auto character = characters.get(character_id, "couldn't find character");
+  check(character.status == 0, "character status does not allow crafting");
   auto history = charhistory.get(character_id, "couldn't find history");
   bool found = (find(history.learned_recipes.begin(), history.learned_recipes.end(), recipe_id) != history.learned_recipes.end());
   check(found != false, "recipe hasn't been learned by character");
@@ -89,7 +92,6 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
 
 void ebonhaven::generate_resource_reward( name user, name payer, uint64_t character_id, vector<name> resource_items ) {
   rewards_index rewards(get_self(), user.value);
-  stats_index stats_table(get_self(), get_self().value);
 
   reward rew = {};
   rew.reward_id = rewards.available_primary_key();

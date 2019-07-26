@@ -202,7 +202,8 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
     
     stats_index stats_table(get_self(), item.category.value);
     auto stat = stats_table.get(item.token_name.value, "couldn't find parent");
-    check(stat.attributes.is_key() != true, "not allowed. use usekey action");
+    check(stat.attributes.is_key() != true, "not allowed. use unlock action");
+    check(stat.attributes.is_chest() != true, "not allowed. use unlock action");
     check(stat.attributes.is_consumable() || stat.attributes.effects.size() > 0, "item cannot be used");
 
     auto effect = effects.get(stat.attributes.effects[effect_idx], "couldn't find effect");
@@ -242,6 +243,7 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
       }
     }
 
+    // Burn NFT if consumable
     if (stat.attributes.is_consumable()) {
       vector<uint64_t> v = { item.id };
       action(
@@ -263,7 +265,7 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
   auto acct = accounts_table.get(user.value, "couldn't find account");
   auto c = characters_table.get(character_id, "couldn't find character");
   check(user == c.owner, "character does not belong to user");
-  check(c.status != 4, "cannot equip items in combat");
+  check(c.status == 0, "character status doesn't allow equipping items");
   check(c.hp > 0, "character ko'd. cannot equip items");
   auto item = items.get(dgood_id, "couldn't find item");
   
@@ -409,6 +411,7 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
   });
 }
 
+// TODO: Restrict to radius around allowed ability vendors coordinate 
 ACTION ebonhaven::buyability( name user, uint64_t character_id, uint64_t ability_id )
 {
   require_auth( user );
@@ -419,6 +422,7 @@ ACTION ebonhaven::buyability( name user, uint64_t character_id, uint64_t ability
   charhistory_index history(get_self(), user.value);
 
   auto c = characters.get(character_id, "couldn't find character");
+  check(c.status == 0, "character status doesn't allow buying abilities");
   check(user == c.owner, "character does not belong to user");
   auto ability = abilities.get(ability_id, "couldn't find ability");
   auto info = history.get(character_id, "couldn't find character info");
@@ -456,7 +460,7 @@ ACTION ebonhaven::equipability( name user, uint64_t character_id, uint64_t abili
 
   auto c = characters.get(character_id, "couldn't find character");
   check(user == c.owner, "character does not belong to user");
-  check(c.status != 4, "cannot equip abilities in combat");
+  check(c.status == 0, "character status doesn't allow equipping abilities");
   check(c.hp > 0, "character ko'd. cannot equip abilities");
   auto ability = abilities.get(ability_id, "couldn't find ability");
   auto info = history.get(character_id, "couldn't find character info");
@@ -505,6 +509,83 @@ ACTION ebonhaven::equipability( name user, uint64_t character_id, uint64_t abili
   characters.modify( itr, user, [&](auto& row) {
       row.abilities = c.abilities;
   });
+}
+
+ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
+{
+  require_auth( user );
+  dgoods_index items(get_self(), get_self().value);
+  stats_index stats_table(get_self(), get_self().value);
+  auto key = items.get(key_id, "couldn't find key");
+  auto key_stat = stats_table.get(key.token_name.value, "couldn't find key stats");
+  check(key_stat.attributes.is_key(), "incorrect item type: key");
+  check(key_stat.attributes.effects.size() > 0, "no key effect found");
+  auto chest = items.get(chest_id, "couldn't find chest");
+  auto chest_stat = stats_table.get(chest.token_name.value, "couldn't find chest stats");
+  check(chest_stat.attributes.is_chest(), "incorrect item type: chest");
+  
+  effects_index effects(get_self(), get_self().value);
+
+  auto key_effect = effects.get(key_stat.attributes.effects[0], "couldn't find key effect");
+  json j = json::parse(key_effect.effect_data);
+  vector<string> unlocks;
+  if (j.count("unlocks") > 0) {
+    for (auto& el: j["unlocks"]) {
+      unlocks.push_back(el);
+    }
+  } else {
+    check(false, "no unlocks key found in effect");
+  }
+
+  bool found = find(unlocks.begin(), unlocks.end(), chest.token_name.to_string()) != unlocks.end();
+  check(found, "chest cannot be unlocked by this key");
+
+  auto chest_effect = effects.get(chest_stat.attributes.effects[0], "couldn't find chest effect");
+  j = json::parse(chest_effect.effect_data);
+  uint64_t drop_id;
+  if (j.count("drop") > 0) {
+    drop_id = j["drop"].get<uint64_t>();
+  } else {
+    check(false, "no drop id found in chest effect");
+  }
+
+  drops_index drops(get_self(), get_self().value);
+  auto drop = drops.get(drop_id, "couldn't find drop");
+
+  rewards_index rewards(get_self(), user.value);
+  reward r = {};
+  r.reward_id = rewards.available_primary_key();
+  if (r.reward_id == 0) { r.reward_id = 1; }
+  r.worth = asset(0, symbol(symbol_code("EBON"),2));
+  auto roll = random(100);
+  print("Drop roll: ", roll);
+  if (drop.min_worth.amount > 0) {
+    auto amt = random(drop.max_worth.amount - drop.min_worth.amount);
+    r.worth.amount = drop.min_worth.amount + amt;
+  }
+  for (auto& drop: drop.drops) {
+    uint8_t perc = abs(floor((100 * drop.percentage) / 100));
+    // print(" Rolled on drop: ", perc);
+    if ( roll <= perc ) {
+      print(" Item won: ", drop.token_name);
+      r.items.push_back(drop.token_name);
+    }
+  }
+
+  vector<uint64_t> to_burn = {
+    key.id, chest.id
+  };
+  action(
+    permission_level{ user, name("active") },
+    name("ebonhavencom"),
+    name("burnnft"),
+    make_tuple( user, to_burn )
+  ).send();
+
+  rewards.emplace( user, [&](auto& reward) {
+    reward = r; 
+  });
+
 }
 
 void ebonhaven::reset_stats( ebonhaven::character& c ) {

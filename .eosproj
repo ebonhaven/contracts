@@ -3,7 +3,7 @@
   "contract": "ebonhaven",
   "include": "",
   "resource": "",
-  "cdt": "v1.6.2",
+  "cdt": "cmd",
   "output": "",
   "scripts": {
     "build": "eosio-cpp -abigen -I include -contract ebonhaven -o ebonhaven.wasm src/ebonhaven.cpp"

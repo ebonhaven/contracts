@@ -146,6 +146,8 @@ CONTRACT ebonhaven : public contract {
     
     TABLE drop {
       uint64_t drop_id;
+      asset    min_worth = asset(0, symbol(symbol_code("EBON"), 2));
+      asset    max_worth = asset(0, symbol(symbol_code("EBON"), 2));
       vector<item_drop> drops;
 
       uint64_t primary_key() const { return drop_id; }
@@ -353,11 +355,13 @@ CONTRACT ebonhaven : public contract {
                                              ebonhaven::mob& m,
                                              bool is_ranged);
     void generate_encounter( name user, name payer, ebonhaven::character& character, vector<uint64_t> mob_ids);
-    void generate_reward( name user,
-                          name payer,
-                          uint32_t character_level,
-                          encounter s_encounter );
-    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<name> resource_items ) ;
+    void generate_combat_reward( name user,
+                                 name payer,
+                                 uint32_t character_level,
+                                 encounter s_encounter );
+    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<name> resource_items );
+    name roll_treasure( ebonhaven::character& character );
+    void generate_treasure( name user, name payer, ebonhaven::character& character );
     uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
     bool is_encounter_over(ebonhaven::character c, ebonhaven::encounter e);
 
@@ -379,19 +383,18 @@ CONTRACT ebonhaven : public contract {
     int rate_to_floor(float_t rate, int range) {
       return (int)floor(rate * range + 0.5);
     }
+
+    int percentage_of_range(float_t percentage, int range) {
+      return (int)floor(range * percentage + 0.5);
+    }
     
     int inventory_count(name user) {
       dgoods_index dgood_table(get_self(), get_self().value);
-      auto index_by_owner = dgood_table.get_index<name("byowner")>();
-      auto itr = index_by_owner.lower_bound(user.value);
-      int i = 0;
-      while (itr != index_by_owner.end()) {
-        if (itr->owner == user && itr->equipped != true) {
-          i++;
-        }
-        itr++;
-      }
-      return i;
+      vector<dgood> items;
+      copy_if(dgood_table.begin(), dgood_table.end(), back_inserter(items), [&user](const struct dgood& el) {
+        return el.owner == user && el.equipped == false;
+      });
+      return items.size();
     }
 
     bool is_position_within_target_radius(pair <int, int> position, pair<int, int> target, float radius) {
@@ -446,6 +449,8 @@ CONTRACT ebonhaven : public contract {
     ACTION buyability( name user, uint64_t character_id, uint64_t ability_id );
     
     ACTION equipability( name user, uint64_t character_id, uint64_t ability_id, uint8_t ability_idx );
+
+    ACTION unlock( name user, uint64_t key_id, uint64_t chest_id );
                          
     ACTION move( name user, uint64_t character_id, position new_position );
     
@@ -460,7 +465,7 @@ CONTRACT ebonhaven : public contract {
     ACTION printval( name user, uint64_t x, uint64_t y );
     
     // Admin
-    ACTION spawnitems( name to, name token_name, uint64_t quantity );
+    ACTION spawnitem( name to, name token_name );
     
     //Admin
     ACTION spawnability( name user, uint64_t character_id, uint64_t ability_id );
@@ -565,7 +570,7 @@ CONTRACT ebonhaven : public contract {
                    uint64_t drop_id );
     
     // Admin                 
-    ACTION upsdrop( uint64_t drop_id, vector<item_drop> item_drops);
+    ACTION upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, vector<item_drop> item_drops);
     
     // Admin
     ACTION upsresource( uint64_t world_zone_id,
@@ -586,12 +591,16 @@ CONTRACT ebonhaven : public contract {
                        vector<mobdata> mobs,
                        vector<npcdata> npcs );
 
+    // Admin
     ACTION upsrecipe( uint64_t recipe_id,
                       name category,
                       name token_name,
                       uint8_t profession_lock,
                       uint32_t min_skill,
                       vector<requirement> requirements );
+    
+    // Admin
+    ACTION gentreasure( name user, uint64_t character_id );
     
     // Admin                     
     ACTION setconfig(string version);

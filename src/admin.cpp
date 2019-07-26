@@ -227,7 +227,7 @@ ACTION ebonhaven::upsmob( uint32_t mob_id,
     }
 };
 
-ACTION ebonhaven::upsdrop( uint64_t drop_id, vector<item_drop> item_drops)
+ACTION ebonhaven::upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, vector<item_drop> item_drops)
 {
   require_auth( get_self() );
   drops_index drops(get_self(), get_self().value);
@@ -240,10 +240,14 @@ ACTION ebonhaven::upsdrop( uint64_t drop_id, vector<item_drop> item_drops)
   if ( itr == drops.end() ) {
     drops.emplace( get_self(), [&](auto& d) {
       d.drop_id = drop_id;
+      d.min_worth = min_worth;
+      d.max_worth = max_worth;
       d.drops = item_drops;
     });
   } else {
     drops.modify( itr, get_self(), [&](auto& d) {
+      d.min_worth = min_worth;
+      d.max_worth = max_worth;
       d.drops = item_drops;
     });
   }
@@ -291,19 +295,20 @@ ACTION ebonhaven::upstreasure( uint64_t world_zone_id, vector<item_drop> drops )
 }
 
 // Admin
-ACTION ebonhaven::spawnitems( name to, name token_name, uint64_t quantity )
+ACTION ebonhaven::spawnitem( name to, name token_name )
 {
   require_auth( get_self() );
   
   accounts_index accounts(get_self(), to.value);
   auto acct = accounts.get(to.value, "account not found");
   
+  print(inventory_count(to));
   check(inventory_count(to) <= acct.max_inventory - 1, "not enough inventory space");
   action(
     permission_level{ get_self(), name("active") },
     name("ebonhavencom"),
     name("issue"),
-    make_tuple( to, name("ebonhavencom"), token_name, to_string(quantity), string("1"), string(""), string("issued from ebonhavencom"))
+    make_tuple( to, name("ebonhavencom"), token_name, string("1"), string("1"), string(""), string("issued from ebonhavencom"))
   ).send();
 }
 
@@ -541,4 +546,12 @@ ACTION ebonhaven::upsrecipe( uint64_t recipe_id,
       r.requirements = updated_requirements;
     });
   }
+}
+
+ACTION ebonhaven::gentreasure( name user, uint64_t character_id )
+{
+  require_auth( get_self() );
+  characters_index characters( get_self(), user.value );
+  auto character = characters.get(character_id, "couldn't find character");
+  generate_treasure( user, get_self(), character );
 }
