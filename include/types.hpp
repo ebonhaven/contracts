@@ -81,6 +81,16 @@ namespace types {
     ELITE = 4,
     BOSS = 5
   };
+
+  enum class objective_type: uint8_t {
+    KILL = 0,
+    COLLECTION = 1,
+    COURIER = 2,
+    PROFESSION = 3,
+    ESCORT = 4,
+    REPUTATION = 5,
+    EXPLORATION = 6
+  };
   
   struct attack {
     uint32_t physical = 0;
@@ -200,6 +210,7 @@ namespace types {
   
   struct mobdata {
     coords coordinates;
+    uint64_t mob_id;
     uint8_t status;
     float_t radius;
     string attributes;
@@ -207,6 +218,7 @@ namespace types {
   
   struct npcdata {
     coords coordinates;
+    uint64_t npc_id;
     float_t radius;
     string attributes;
   };
@@ -214,6 +226,13 @@ namespace types {
   struct requirement {
     name token_name;
     uint64_t quantity;
+  };
+
+  struct objective {
+    uint64_t objective_id;
+    uint8_t  objective_type = 0;
+    uint8_t  completed = 0;
+    string   objective_data;
   };
   
 }

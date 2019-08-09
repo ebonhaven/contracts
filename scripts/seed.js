@@ -1,5 +1,5 @@
 const EOS = require('../test/lib/eos');
-const config = require('./config.json');
+const config = require('../data/config.json');
 const stats = require('../data/basestats.json');
 const effects = require('../data/effects.json').effects;
 const auras = require('../data/auras.json').auras;
@@ -11,12 +11,14 @@ const resources = require('../data/resources.json').resources;
 const treasures = require('../data/treasures.json').treasures;
 const mapdata = require('../data/mapdata.json').mapdata;
 const recipes = require('../data/recipes.json').recipes;
+const quests = require('../data/quests.json').quests;
+const npcs = require('../data/npcs.json').npcs;
 const argv = require('yargs').argv
 
 class Seeder {
 
     constructor() {
-        this.eos = new EOS(config.endpoint, config.privateKeys);
+        this.eos = new EOS(config.endpoint, config.privateKeys, 'ebonhavencom');
     }
 
     set eos(value) {
@@ -25,16 +27,6 @@ class Seeder {
 
     get eos() {
         return this.constructor.eos;
-    }
-
-    createAccounts() {
-        let auth = [{
-            actor: 'eosio',
-            permission: 'active'
-        }]; 
-        config.accounts.forEach((a) => {
-            this.eos.createUser(a.name, auth, a.permissions);
-        });
     }
 
     setup() {
@@ -46,7 +38,25 @@ class Seeder {
         let data = {
             version: '1.0.0'
         };
-        this.eos.action("ebonhavencom", "setconfig", auth, data);
+        this.eos.action("setconfig", auth, data);
+    }
+
+    createAccounts() {
+        let auth = [{
+            actor: 'eosio',
+            permission: 'active'
+        }]; 
+        config.accounts.forEach((a) => {
+            this.eos.createUser(a.name, auth, a.permissions);
+        }); 
+    }
+
+    createAdminAccount() {
+        let auth = [{
+            actor: 'ebonhavencom',
+            permission: 'active'
+        }];
+        this.eos.action('newaccount', auth, { user: "ebonhavencom" });
     }
 
     setupStats() {
@@ -55,7 +65,6 @@ class Seeder {
 
         stats.basestats.forEach((s) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsstats",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -74,7 +83,6 @@ class Seeder {
 
         effects.forEach((e) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upseffect",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -93,7 +101,6 @@ class Seeder {
 
         auras.forEach((a) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsaura",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -112,7 +119,6 @@ class Seeder {
 
         abilities.forEach((a) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsability",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -136,7 +142,7 @@ class Seeder {
                 category: i.category,
                 token_name: i.token_name
             };
-            this.eos.action("ebonhavencom", "retire", auth, data);
+            this.eos.action("retire", auth, data);
         });
     }
 
@@ -146,7 +152,6 @@ class Seeder {
 
         items.forEach((i) => {
             let action = {
-                account: "ebonhavencom",
                 name: "create",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -165,7 +170,6 @@ class Seeder {
 
         config.accounts.forEach((a) => {
             let action = {
-                account: "ebonhavencom",
                 name: "newcharacter",
                 authorization: [{
                     actor: a.name,
@@ -197,7 +201,6 @@ class Seeder {
         let actions = [];
         drops.forEach((d) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsdrop",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -215,7 +218,6 @@ class Seeder {
         let actions = [];
         mobs.forEach((m) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsmob",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -233,7 +235,6 @@ class Seeder {
         let actions = [];
         resources.forEach((r) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsresource",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -251,7 +252,6 @@ class Seeder {
         let actions = [];
         treasures.forEach((t) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upstreasure",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -269,7 +269,6 @@ class Seeder {
         let actions = [];
         mapdata.forEach((m) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsmapdata",
                 authorization: [{
                     actor: "ebonhavencom",
@@ -287,13 +286,46 @@ class Seeder {
         let actions = [];
         recipes.forEach((r) => {
             let action = {
-                account: "ebonhavencom",
                 name: "upsrecipe",
                 authorization: [{
                     actor: "ebonhavencom",
                     permission: "active"
                 }],
                 data: r
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
+
+    seedQuests() {
+        console.log("Seeding quests...");
+        let actions = [];
+        quests.forEach((q) => {
+            let action = {
+                name: "upsquest",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: q
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
+
+    seedNpcs() {
+        console.log("Seeding npcs...");
+        let actions = [];
+        npcs.forEach((n) => {
+            let action = {
+                name: "upsnpc",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: n
             };
             actions.push(action);
         });
@@ -309,6 +341,9 @@ switch(argv._[0]) {
         break;
     case "setup":
         seeder.setup();
+        break;
+    case "admin":
+        seeder.createAdminAccount();
         break;
     case "basestats":
         seeder.setupStats();
@@ -346,22 +381,31 @@ switch(argv._[0]) {
     case "recipes":
         seeder.seedRecipes();
         break;
+    case "quests":
+        seeder.seedQuests();
+        break;    
+    case "npcs":
+        seeder.seedNpcs();
+        break;
     case "retireall":
         seeder.retireAllItems();
         break;
     default:
         seeder.setup();
+        seeder.createAdminAccount();
         seeder.setupStats();
         seeder.seedEffects();
         seeder.seedAuras();
         seeder.seedAbilities();
         seeder.seedItems();
-        seeder.seedCharacters();
+        // seeder.seedCharacters();
         seeder.seedDrops();
         seeder.seedMobs();
         seeder.seedResources();
         seeder.seedTreasures();
         seeder.seedMapdata();
         seeder.seedRecipes();
+        seeder.seedQuests();
+        seeder.seedNpcs();
         break;
 }

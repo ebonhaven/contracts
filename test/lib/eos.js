@@ -6,11 +6,12 @@ const fetch = require('node-fetch').default;
 
 class EOS {
 
-    constructor(endpoint, keys) {
+    constructor(endpoint, keys, account) {
         let signatureProvider = new JsSignatureProvider(keys);
         this.signatureProvider = signatureProvider;
         let rpc = new JsonRpc(endpoint, { fetch });
         this.rpc = rpc;
+        this.account = account;
         this.api = new Api({
             rpc,
             signatureProvider,
@@ -24,10 +25,10 @@ class EOS {
         return response;
     }
 
-    async readTable(account, table, scope, limit = 10) {
+    async readTable(table, scope, limit = 10) {
         let response = await this.rpc.get_table_rows({
             json: true,
-            code: account,
+            code: this.account,
             scope: scope,
             table: table,
             limit: limit
@@ -75,10 +76,10 @@ class EOS {
         return result;
     }
 
-    async action(accountName, actionName, authorization, data, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 30) {
+    async action(actionName, authorization, data, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 30) {
         let response = await this.api.transact({
             actions: [{
-                account: accountName,
+                account: this.account,
                 name: actionName,
                 authorization: authorization,
                 data: data
@@ -95,8 +96,13 @@ class EOS {
     };
 
     async actions(actions, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 30) {
+        let accountActions = [];
+        actions.forEach((a) => {
+            a.account = this.account;
+            accountActions.push(a);
+        });
         let response = await this.api.transact({
-            actions: actions
+            actions: accountActions
         }, 
         {   
             broadcast: broadcast,

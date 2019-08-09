@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "seed": "node scripts/seed.js",
+    "seed:characters": "node scripts/seed.js characters",
     "seed:accounts": "node scripts/seed.js accounts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/index.js -s 3000"
   },
   "author": "",
   "license": "ISC",

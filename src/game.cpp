@@ -13,13 +13,13 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
   auto character = characters.get(character_id, "cannot find character");
   check(character.owner == user, "does not belong to user");
   check(character.status == 0, "status does not allow movement");
-  check(character.hp > 0, "cannot move");
-  
+  check(character.hp > 0, "cannot move while dead");
+  check(new_position.world_zone_id == character.position.world_zone_id, "cannot move to other world zone");
+
   // Check if in same position
   bool same_position = false;
-  if (new_position.world_zone_id == character.position.world_zone_id && 
-      new_position.x == character.position.x &&
-      new_position.y == character.position.y ) {
+  if ( new_position.x == character.position.x &&
+       new_position.y == character.position.y ) {
     check(false, "cannot move to same position");
   }
 
@@ -40,7 +40,9 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
   bool is_walkable = is_coordinate_walkable(md->tiles, new_position.x, new_position.y);
   check(is_walkable, "cannot move to position");
 
-  character.position = new_position;
+  character.position.x = new_position.x;
+  character.position.y = new_position.y;
+  character.position.orientation = new_position.orientation;
   
   int range = 1000;
   auto num = random(range);
@@ -98,6 +100,7 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
   auto character = characters.get(encounter.character_id, "character doesn't exist");
   check(character.owner == user, "character doesn't belong to user");
   check(character.status == 4, "character is not in combat");
+  check(character.hp > 0, "cannot combat while dead");
   check(combat_decision > 0 && combat_decision <= 8, "combat decision not valid");
   check(mob_idx <= encounter.mobs.size(), "mob index out of bounds");
   check(encounter.encounter_status == 0, "encounter no longer in progress");
@@ -171,10 +174,12 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
       } else {
         mob_can_hit = false;
         encounter.mobs[mob_idx].hp = 0;
-        
+        update_kill_quest_objectives( user, character.character_id, encounter.mobs[mob_idx].mob_id );
+
         if (is_encounter_over(character, encounter)) {
           encounter.encounter_status = 1;
           character.status = 0;
+          
           generate_combat_reward( user, user, character.level, encounter );  
         }
         
@@ -251,6 +256,63 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
     e = encounter;
   });
 };
+
+ACTION ebonhaven::revive( name user, uint64_t character_id, uint64_t ressurect_item )
+{
+  require_auth( user );
+
+  characters_index characters(get_self(), user.value);
+  auto character = characters.get(character_id, "cannot find character");
+
+  if (ressurect_item == 0) {
+    mapdata_index u_mapdata(get_self(), user.value);
+    auto md = find_if(u_mapdata.begin(), u_mapdata.end(),
+        [&character](const struct mapdata& el){ return el.world_zone_id == character.position.world_zone_id &&
+                                                el.character_id == character.character_id; });
+    check(md != u_mapdata.end(), "mapdata not found");
+    character.position = md->respawn;
+    character.hp = (character.max_hp * 20) / 100;
+
+    // Apply durability degradation to equipped items
+  } else {
+    dgoods_index items(get_self(), get_self().value);
+    stats_index stats_table(get_self(), get_self().value);
+    auto item = items.get(ressurect_item, "couldn't find item");
+    auto item_stats = stats_table.get(item.token_name.value, "couldn't find item stats");
+
+    effects_index effects(get_self(), get_self().value);
+    auto i_effect = effects.get(item_stats.attributes.effects[0], "couldn't find key effect");
+    check(i_effect.can_resurrect(), "item cannot ressurect");
+
+    vector<uint64_t> v = { item.id };
+    action(
+      permission_level{ user, name("active") },
+      name("ebonhavencom"),
+      name("burnnft"),
+      make_tuple( user, v )
+    ).send();
+
+    character.hp = character.max_hp;
+  }
+
+  // Clean up old encounters
+  vector<encounter> enc_to_delete;
+  encounters_index encounters(get_self(), user.value);
+  copy_if(encounters.begin(), encounters.end(), back_inserter(enc_to_delete),
+    [&character](const struct encounter& e) { return e.character_id == character.character_id; });
+  for (auto e: enc_to_delete) {
+    auto itr = encounters.find(e.encounter_id);
+    if (itr != encounters.end()) {
+      encounters.erase(itr);
+    }
+  }
+  
+  auto c_itr = characters.find(character.character_id);
+  characters.modify( c_itr, user, [&](auto& c) {
+    c.position = character.position;
+    c.hp = character.hp;
+  });
+}
 
 // TODO: Add crits = double damage
 uint64_t ebonhaven::calculate_player_attack_damage( name user,
@@ -357,6 +419,7 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
   encounters_index encounters(get_self(), user.value);
   auto reward = rewards.get( reward_id, "reward not found" );
   auto acct = accounts.get( user.value, "couldn't find account");
+  
 
   if (reward.worth.amount > 0) {
     action(

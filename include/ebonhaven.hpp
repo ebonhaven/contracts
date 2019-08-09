@@ -69,8 +69,7 @@ CONTRACT ebonhaven : public contract {
       skill            profession_skill;
       vector<uint64_t> learned_abilities;
       vector<uint64_t> learned_recipes;
-      vector<uint64_t> current_quests;
-      vector<uint64_t> completed_quests;
+      vector<name> completed_quests;
       vector<uint64_t> feats;
       
       uint64_t primary_key() const { return character_id; }
@@ -122,7 +121,7 @@ CONTRACT ebonhaven : public contract {
       
       const bool can_resurrect() {
         auto j = nlohmann::json::parse(effect_data);
-        return (j.count("ressurect") > 0 ? true : false);
+        return (j.count("resurrect") > 0 ? true : false);
       }
       
       const bool can_unlock() {
@@ -295,6 +294,34 @@ CONTRACT ebonhaven : public contract {
 
       uint64_t primary_key() const { return recipe_id; }
     };
+
+    TABLE quest {
+      uint64_t quest_id;
+      name     quest_name;
+      uint64_t character_id;
+      uint64_t begin_npc_id;
+      uint8_t  min_level = 1;
+      uint64_t complete_npc_id;
+      asset    worth;
+      uint32_t experience;
+      vector<name> rewards;
+      uint8_t  repeatable;
+      vector<uint64_t> prerequisites;
+      uint8_t  profession_lock = 0;
+      uint8_t  race_lock = 0;
+      vector<objective> objectives;
+
+      uint64_t primary_key() const { return quest_name.value; }
+      uint64_t by_quest_id() const { return quest_id; }
+    };
+
+    TABLE npc {
+      uint64_t npc_id;
+      vector<name> quests;
+      vector<uint64_t> triggers;
+
+      uint64_t primary_key() const { return npc_id; }
+    };
     
     // TABLES
     using globals_index = singleton< "globals"_n, globals >;
@@ -338,6 +365,11 @@ CONTRACT ebonhaven : public contract {
             indexed_by< "bycharacterid"_n, const_mem_fun< mapdata, uint64_t, &mapdata::by_character_id> > >;
 
     using recipes_index = multi_index< "recipes"_n, recipe>;
+
+    using quests_index = multi_index< "quests"_n, quest,
+            indexed_by< "byquestid"_n, const_mem_fun< quest, uint64_t, &quest::by_quest_id> > >;
+
+    using npcs_index = multi_index< "npcs"_n, npc>;
             
     void mint( name to, name issuer, name category, name token_name,
                uint64_t issued_supply, string relative_uri, dgood_attributes attributes );
@@ -364,6 +396,8 @@ CONTRACT ebonhaven : public contract {
     void generate_treasure( name user, name payer, ebonhaven::character& character );
     uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
     bool is_encounter_over(ebonhaven::character c, ebonhaven::encounter e);
+    void update_kill_quest_objectives( name user, uint64_t character_id, uint64_t mob_id );
+    void generate_quest_reward( name user, name payer, uint64_t character_id, vector<name> quest_items );
 
     int random(const int range) {
       globals_index globals( get_self(), get_self().value );
@@ -455,12 +489,18 @@ CONTRACT ebonhaven : public contract {
     ACTION move( name user, uint64_t character_id, position new_position );
     
     ACTION combat( name user, uint64_t encounter_id, uint8_t combat_decision, uint8_t mob_idx );
+
+    ACTION revive( name user, uint64_t character_id, uint64_t ressurect_item );
     
     ACTION claimrewards( name user, uint64_t reward_id, vector<name> selected_items );
 
     ACTION craft( name user, uint64_t character_id, uint64_t recipe_id );
 
     ACTION gather( name user, uint64_t character_id );
+
+    ACTION acceptquest( name user, uint64_t character_id, uint64_t npc_id, name quest_name );
+
+    ACTION endquest( name user, uint64_t character_id, uint64_t npc_id, uint64_t quest_id );
     
     ACTION printval( name user, uint64_t x, uint64_t y );
     
@@ -510,6 +550,9 @@ CONTRACT ebonhaven : public contract {
     
     // Admin
     ACTION modstatus( name user, uint64_t character_id, uint8_t status );
+
+    // Admin
+    ACTION modhp( name user, uint64_t character_id, uint64_t health );
 
     // Admin
     ACTION upsaura( uint64_t aura_id,
@@ -602,6 +645,27 @@ CONTRACT ebonhaven : public contract {
     // Admin
     ACTION gentreasure( name user, uint64_t character_id );
     
+    // Admin
+    ACTION upsquest( name user,
+                     uint64_t character_id,
+                     name quest_name,
+                     uint64_t begin_npc_id,
+                     uint8_t min_level,
+                     uint64_t complete_npc_id,
+                     asset worth,
+                     uint32_t experience,
+                     vector<name> rewards,
+                     uint8_t repeatable,
+                     vector<uint64_t> prerequisites,
+                     uint8_t profession_lock,
+                     uint8_t race_lock,
+                     vector<objective> objectives );
+    
+    // Admin
+    ACTION upsnpc( uint64_t npc_id,
+                   vector<name> quests,
+                   vector<uint64_t> triggers );
+
     // Admin                     
     ACTION setconfig(string version);
     

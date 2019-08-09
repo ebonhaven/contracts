@@ -207,9 +207,7 @@ void ebonhaven::mint(name to,
 
   dgoods_index dgood_table( get_self(), get_self().value);
   auto dgood_id = dgood_table.available_primary_key();
-  if (dgood_id == 0) {
-    dgood_id++;
-  }
+  if (dgood_id == 0) { dgood_id++; }
   if ( relative_uri.empty() ) {
     dgood_table.emplace( issuer, [&]( auto& dg) {
       dg.id = dgood_id;

@@ -1,20 +1,13 @@
 const assert = require('chai').assert;
 const util = require('util');
-const config = require('./../../config/test_config.json');
+const config = require('../../data/config.json');
 const EOS = require('../lib/eos');
 
 describe('Characters', function() {
-    let eos;
-    let auth;
-    let contractAuth;
-    let account;
-    let characters;
-    let created;
-    let item;
-    let modData;
+    let eos, auth, contractAuth, account, characters, created, item, modData;
 
     before(async function() {
-        eos = new EOS(config.endpoint, config.privateKeys);
+        eos = new EOS(config.endpoint, config.privateKeys, 'ebonhavencom');
         auth = [{
             actor: 'alice',
             permission: 'active'
@@ -24,6 +17,11 @@ describe('Characters', function() {
             permission: 'active'
         }];
         let response = await eos.readTable('characters', 'alice');
+        let data = {
+            to: 'alice',
+            quantity: '1.00 EBON'
+        };
+        await eos.action('tokenreward', contractAuth, data);
         characters = response['rows'];
         response = await eos.readTable('accounts', 'alice');
         account = response['rows'][0];
@@ -47,90 +45,43 @@ describe('Characters', function() {
         assert.equal(characters.length + 1, total, `Character was not created`);
     });
 
-    it('can be modified by contract account', async function() {
-        modData = {
+    it('can use consumables', async function() {
+        let data = {
             user: 'alice',
             character_id: created.character_id,
-            character_name: created.character_name,
-            gender: created.gender,
-            profession: created.profession,
-            race: created.race,
-            level: created.level,
-            experience: created.experience,
-            new_position: [ 
-                created.position.world,
-                created.position.zone,
-                created.position.x,
-                created.position.y,
-                created.position.orientation
-            ],
-            status: created.status,
-            hp: created.hp - 50,
-            max_hp: created.max_hp,
-            new_stats: [
-               created.stats.stamina,
-               created.stats.regen,
-               created.stats.perception,
-               created.stats.skill,
-               created.stats.luck 
-            ],
-            new_attack: [
-                created.attack.physical,
-                created.attack.spell
-            ],
-            new_defense: [
-                created.defense.physical,
-                created.defense.spell
-            ]
+            health: created.max_hp - 50
         };
-
-        await eos.action('modcharacter', contractAuth, modData);
-        const response = await eos.readTable('characters', 'alice');
-        
-        let prevHealth = created.hp;
+        await eos.action('modhp', contractAuth, data);
+        let response = await eos.readTable('characters', 'alice');
         created = response['rows'].filter((c) => {
             return c.character_id == created.character_id;
         })[0];
+        assert.equal(created.hp, data.health, `Character health not modified`);
 
-        assert.equal(created.hp, prevHealth - 50, `Character health was not modified`);
-
-    });
-
-    it('cannot be modified by users', async function() {
-        try {
-            await eos.action('modcharacter', auth, modData);
-        } catch (error) {
-            return;
-        }
-        assert.fail(`Characters modified by users`);
-    });
-
-    it('can use consumables', async function() {
-        assert.equal(created.hp, created.max_hp - 50, `Character health not modified`);
-        let data = {
+        data = {
             to: 'alice',
-            item_ids: [202]
+            token_name: 'potion1'
         };
-        await eos.action('spawnitems', contractAuth, data);
-        let response = await eos.readTable('items', 'alice');
-        let item = response['rows'].filter((i) => {
-            return i.parent_id == 202;
+        await eos.action('spawnitem', contractAuth, data);
+        response = await eos.readTable('dgood', 'ebonhavencom');
+        let potion = response['rows'].filter((i) => {
+            return i.token_name == 'potion1' && i.owner == 'alice';
         })[0];
-        assert.isOk(item, `Item not found`);
+        assert.isOk(potion, `Item not found`);
 
         data = {
             user: 'alice',
             character_id: created.character_id,
-            item_id: item.item_id,
+            dgood_id: potion.id,
             effect_idx: 0
         };
 
         await eos.action('useitem', auth, data);
-        response = await eos.readTable('items', 'alice');
-        let delItem = response['rows'].filter((i) => {
-            return i.item_id == item.item_id;
+        response = await eos.readTable('dgood', 'ebonhavencom');
+        let table = response['rows'].filter((i) => {
+            return i.id == potion.id && i.owner == 'alice';
         });
-        assert.equal(delItem.length, 0, `Item was not consumed`);
+        assert.equal(table.length, 0, `Item was not consumed`);
         response = await eos.readTable('characters', 'alice');
         let character = response['rows'].filter((c) => {
             return c.character_id == created.character_id;
@@ -141,38 +92,40 @@ describe('Characters', function() {
     it('can equip items', async function() {
         let data = {
             to: 'alice',
-            item_ids: [301]
+            token_name: 'weapon1'
         };
-        await eos.action('spawnitems', contractAuth, data);
-        let response = await eos.readTable('items', 'alice');
+        await eos.action('spawnitem', contractAuth, data);
+        let response = await eos.readTable('dgood', 'ebonhavencom');
         item = response['rows'].filter((i) => {
-            return i.parent_id == 301;
+            return i.token_name == 'weapon1' && i.owner == 'alice';
         })[0];
         assert.isOk(item, `Item not found`);
 
         data = {
             user: 'alice',
             character_id: created.character_id,
-            item_id: item.item_id,
-            equip_slot: 1
+            dgood_id: item.id,
+            equip_slot: 11
         };
         await eos.action('equipitem', auth, data);
         response = await eos.readTable('characters', 'alice');
         created = response['rows'].filter((c) => {
             return c.character_id == created.character_id;
         })[0];
-        assert.notEqual(created.equipped.head, 0, `Item was not equipped`);
+        assert.notEqual(created.equipped.weapon, 0, `Character was not updated with equipped item`);
 
-        response = await eos.readTable('accounts', 'alice');
-        account = response['rows'][0];
-        assert.isTrue(account.inventory.length == 0, `Item still in inventory`);
+        response = await eos.readTable('dgood', 'ebonhavencom');
+        item = response['rows'].filter((i) => {
+            return i.token_name == 'weapon1' && i.owner == 'alice';
+        })[0];
+        assert.isTrue(item.equipped == 1, `Item not equipped properly`);
     });
 
     it('can unequip items', async function() {
-        data = {
+        let data = {
             user: 'alice',
             character_id: created.character_id,
-            item_id: item.item_id,
+            dgood_id: item.id,
             equip_slot: 0
         };
         await eos.action('equipitem', auth, data);
@@ -180,26 +133,25 @@ describe('Characters', function() {
         created = response['rows'].filter((c) => {
             return c.character_id == created.character_id;
         })[0];
-        assert.equal(created.equipped.head, 0, `Item was not unequipped`);
+        assert.equal(created.equipped.weapon, 0, `Item was not unequipped`);
 
-        response = await eos.readTable('accounts', 'alice');
-        account = response['rows'][0];
-        assert.isTrue(account.inventory.length > 0, `Item did not return to inventory`);
+        response = await eos.readTable('dgood', 'ebonhavencom');
+        item = response['rows'].filter((i) => {
+            return i.token_name == 'weapon1' && i.owner == 'alice';
+        })[0];
+        assert.isTrue(item.equipped == 0, `Item not equipped properly`);
     });
 
-    it('can destroy items', async function() {
+    it('can burn items', async function() {
         data = {
-            user: 'alice',
-            item_id: item.item_id
+            owner: 'alice',
+            dgood_ids: [item.id]
         };
-        await eos.action('destroyitem', auth, data);
-        let response = await eos.readTable('accounts', 'alice');
-        account = response['rows'][0];
-        assert.equal(account.inventory.indexOf(item.item_id), -1, `Item still in inventory`);
+        await eos.action('burnnft', auth, data);
         
-        response = await eos.readTable('items', 'alice');
+        response = await eos.readTable('dgood', 'ebonhavencom');
         let found = response['rows'].filter((i) => {
-            return i.item_id == item.item_id;
+            return i.id == item.id;
         });
         assert.equal(found.length, 0, `Item was not destroyed`);
 
@@ -216,11 +168,11 @@ describe('Characters', function() {
         let updatedBalance = response['rows'][0].balance;
         assert.isTrue(updatedBalance < account.balance, `Ability cost was not deducted`);
 
-        response = await eos.readTable('history', 'alice');
+        response = await eos.readTable('charhistory', 'alice');
         let history = response['rows'].filter((h) => {
             return h.character_id == created.character_id;
         })[0];
-        assert.isTrue(history.abilities.length > 0, `Ability not added`);
+        assert.isTrue(history.learned_abilities.length > 0, `Ability not added`);
     });
 
     it('can equip abilities', async function() {

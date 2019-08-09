@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const util = require('util');
-const config = require('./../../config/test_config.json');
+const config = require('../../data/config.json');
 const EOS = require('../lib/eos');
 const helpers = require('../lib/helpers');
 
@@ -16,7 +16,7 @@ let outcomes = {
 };
 
 function getPositionArray(character) {
-    return [ character.position.world, character.position.zone, character.position.x, character.position.y, character.position.orientation ];
+    return [ character.position.world_zone_id, character.position.x, character.position.y, character.position.orientation ];
 }
 
 function normalizeFloat(x) {
@@ -80,7 +80,7 @@ describe('Movement', function() {
     }
 
     before(async function() {
-        eos = new EOS(config.endpoint, config.privateKeys);
+        eos = new EOS(config.endpoint, config.privateKeys, 'ebonhavencom');
         auth = [{
             actor: 'alice',
             permission: 'active'
@@ -104,8 +104,8 @@ describe('Movement', function() {
 
     it('encounter rates can be modified by contract owner', async function() {
         await setOutcome(outcomes.DEFAULT)
-        response = await eos.readTable('globalrates', 'ebonhavencom');
-        rates = response['rows'][0];
+        response = await eos.readTable('globals', 'ebonhavencom');
+        rates = response['rows'][0]['rates'];
         assert.equal(normalizeFloat(rates.combat), normalizeFloat(rateData.combat_rate), `Combat rate not updated`);
         assert.equal(normalizeFloat(rates.resource), normalizeFloat(rateData.resource_rate), `Resource rate not updated`);
         assert.equal(normalizeFloat(rates.discovery), normalizeFloat(rateData.discovery_rate), `Discovery rate not updated`);
@@ -129,26 +129,50 @@ describe('Movement', function() {
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 1, 0
-            ]
+            new_position: {
+                world_zone_id: 1,
+                x: 1,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
         character = response['rows'].filter((c) => {
             return c.character_id = character.character_id;
         })[0];
-        let arr = getPositionArray(character);
-        assert.deepEqual(arr, data.new_position, `Position was not updated`);
+        assert.deepEqual(character.position, data.new_position, `Position was not updated`);
+    });
+
+    it('cannot move to unwalkable position', async function() {
+        let data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 0,
+                y: 1,
+                orientation: 0
+            }
+        };
+        try {
+            await eos.action('move', auth, data);
+        } catch (error) {
+            return;
+        }
+        assert.fail(`Moved to unwalkable position`);
     });
 
     it('cannot move to current position', async function() {
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 1, 0
-            ]
+            new_position: {
+                world_zone_id: 1,
+                x: 1,
+                y: 0,
+                orientation: 0
+            }
         };
         try {
             await eos.action('move', auth, data);
@@ -159,36 +183,48 @@ describe('Movement', function() {
     });
 
     it('cannot move if in combat', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 4;
-        await eos.action('modcharacter', contractAuth, char);
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 2, 0
-            ]
+            status: 4
+        };
+        await eos.action('modstatus', contractAuth, data);
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 0,
+                y: 0,
+                orientation: 0
+            }
         };
         try {
             await eos.action('move', auth, data);
         } catch (error) {
             return;
         }
-        assert.fail(`Moved to while in combat`);
+        assert.fail(`Moved while in combat`);
     });
 
     it('can roll a discovery encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.DISCOVERY);
-
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 3, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.DISCOVERY);
+
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 0,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
@@ -199,17 +235,23 @@ describe('Movement', function() {
     });
 
     it('can roll a resource encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.RESOURCE);
-
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 4, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.RESOURCE);
+
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 1,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
@@ -220,17 +262,23 @@ describe('Movement', function() {
     });
 
     it('can roll a trap encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.TRAP);
-
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 5, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.TRAP);
+
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 0,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
@@ -241,16 +289,22 @@ describe('Movement', function() {
     });
 
     it('can roll a combat encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.COMBAT);
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 6, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.COMBAT);
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 1,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
@@ -264,17 +318,23 @@ describe('Movement', function() {
     });
 
     it('can roll a treasure encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.TREASURE);
-
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 7, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.TREASURE);
+
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 0,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');
@@ -285,17 +345,23 @@ describe('Movement', function() {
     });
 
     it('can roll a loot encounter', async function() {
-        let char = helpers.getDefaultCharacter(character);
-        char.status = 0;
-        await eos.action('modcharacter', contractAuth, char);
-        await setOutcome(outcomes.LOOT);
-
         let data = {
             user: 'alice',
             character_id: character.character_id,
-            new_position: [
-                0, 0, 0, 8, 0
-            ]
+            status: 0
+        };
+        await eos.action('modstatus', contractAuth, data);
+        await setOutcome(outcomes.LOOT);
+
+        data = {
+            user: 'alice',
+            character_id: character.character_id,
+            new_position: {
+                world_zone_id: 1,
+                x: 1,
+                y: 0,
+                orientation: 0
+            }
         };
         await eos.action('move', auth, data);
         response = await eos.readTable('characters', 'alice');

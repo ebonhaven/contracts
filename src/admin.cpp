@@ -12,13 +12,26 @@ ACTION ebonhaven::modstatus( name user, uint64_t character_id, uint8_t status )
 }
 
 // Admin
+ACTION ebonhaven::modhp( name user, uint64_t character_id, uint64_t health )
+{
+  require_auth(get_self());
+  characters_index characters(get_self(), user.value);
+  auto character = characters.get(character_id, "cannot find character");
+  check(health <= character.max_hp, "value cannot exceed max hp");
+  auto itr = characters.find(character_id);
+  characters.modify( itr, get_self(), [&](auto& c) {
+    c.hp = health;
+  });
+}
+
+// Admin
 ACTION ebonhaven::upsaura( uint64_t aura_id,
-                              string aura_name, 
-                              string aura_description,
-                              uint8_t aura_type,
-                              uint8_t is_hidden,
-                              uint8_t cooldown, 
-                              string& aura_data )
+                           string aura_name, 
+                           string aura_description,
+                           uint8_t aura_type,
+                           uint8_t is_hidden,
+                           uint8_t cooldown, 
+                           string& aura_data )
 {
   require_auth( get_self() );
   auras_index auras(get_self(), get_self().value);
@@ -451,6 +464,7 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
   for (auto& m: mobs) {
     mobdata new_mob {
       m.coordinates,
+      m.mob_id,
       m.status,
       m.radius,
       m.attributes
@@ -462,6 +476,7 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
   for (auto& n: npcs) {
     npcdata new_npc {
       n.coordinates,
+      n.npc_id,
       n.radius,
       n.attributes
     };
@@ -554,4 +569,94 @@ ACTION ebonhaven::gentreasure( name user, uint64_t character_id )
   characters_index characters( get_self(), user.value );
   auto character = characters.get(character_id, "couldn't find character");
   generate_treasure( user, get_self(), character );
+}
+
+ACTION ebonhaven::upsquest( name user,
+                            uint64_t character_id,
+                            name quest_name,
+                            uint64_t begin_npc_id,
+                            uint8_t min_level,
+                            uint64_t complete_npc_id,
+                            asset worth,
+                            uint32_t experience,
+                            vector<name> rewards,
+                            uint8_t repeatable,
+                            vector<uint64_t> prerequisites,
+                            uint8_t profession_lock,
+                            uint8_t race_lock,
+                            vector<objective> objectives )
+{
+  require_auth( get_self() );
+
+  vector<objective> updated_objectives;
+  for (auto& o: objectives) {
+    objective new_obj {
+      o.objective_id,
+      o.objective_type,
+      o.completed,
+      o.objective_data
+    };
+    updated_objectives.push_back(new_obj);
+  }
+
+  quests_index quests(get_self(), get_self().value);
+  auto itr = quests.find(quest_name.value);
+  if (itr != quests.end()) {
+    quests.modify(itr, get_self(), [&](auto& q) {
+      q.quest_name = quest_name;
+      q.character_id = character_id;
+      q.begin_npc_id = begin_npc_id;
+      q.min_level = min_level;
+      q.complete_npc_id = complete_npc_id;
+      q.worth = worth;
+      q.experience = experience;
+      q.rewards = rewards;
+      q.repeatable = repeatable;
+      q.prerequisites = prerequisites;
+      q.profession_lock = profession_lock;
+      q.race_lock = race_lock;
+      q.objectives = updated_objectives;
+    });
+  } else {
+    auto id = quests.available_primary_key();
+    if (id == 0) { id++; }
+    quests.emplace( get_self(), [&](auto& q) {
+      q.quest_id = id;
+      q.quest_name = quest_name;
+      q.character_id = character_id;
+      q.begin_npc_id = begin_npc_id;
+      q.min_level = min_level;
+      q.complete_npc_id = complete_npc_id;
+      q.worth = worth;
+      q.experience = experience;
+      q.rewards = rewards;
+      q.repeatable = repeatable;
+      q.prerequisites = prerequisites;
+      q.profession_lock = profession_lock;
+      q.race_lock = race_lock;
+      q.objectives = updated_objectives;
+    });
+  }
+}
+
+ACTION ebonhaven::upsnpc( uint64_t npc_id,
+                          vector<name> quests,
+                          vector<uint64_t> triggers )
+{
+  require_auth(get_self());
+
+  npcs_index npcs(get_self(), get_self().value);
+  auto itr = npcs.find(npc_id);
+  if (itr != npcs.end()) {
+    npcs.modify( itr, get_self(), [&](auto& n) {
+      n.quests = quests;
+      n.triggers = triggers;
+    });
+  } else {
+    npcs.emplace( get_self(), [&](auto& n) {
+      n.npc_id = npc_id;
+      n.quests = quests;
+      n.triggers = triggers;
+    });
+  }
 }

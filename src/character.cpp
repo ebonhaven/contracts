@@ -11,8 +11,8 @@ ACTION ebonhaven::newcharacter( name     user,
   require_auth( user );
   
   check( gender >= 0 && gender <= 1, "must be valid gender");
-  check( profession >= 0 && profession <= 5, "must be valid profession");
-  check( race >= 0 && race <= 6, "must be valid race");
+  check( profession > 0 && profession <= 5, "must be valid profession");
+  check( race > 0 && race <= 6, "must be valid race");
   
   // Create account if does not exist
   accounts_index accounts(get_self(), user.value);
@@ -51,14 +51,9 @@ ACTION ebonhaven::newcharacter( name     user,
   mapdata_index mapdata(get_self(), get_self().value);
   auto map = mapdata.get(1, "could't find map");
   mapdata_index u_mapdata(get_self(), user.value);
+  map.character_id = character_id;
   u_mapdata.emplace( user, [&](auto &m) {
-    m.world_zone_id = map.world_zone_id;
-    m.character_id = character_id;
-    m.respawn = map.respawn;
-    m.tiles = map.tiles;
-    m.triggers = map.triggers;
-    m.mobs = m.mobs;
-    m.npcs = m.npcs;
+    m = map;
   });
   
   charhistory_index charhistory(get_self(), user.value);
@@ -128,12 +123,14 @@ ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
       to_delete.push_back(character.equipped.trinket2);
   }
 
-  action(
-    permission_level{ user, name("active") },
-    name("ebonhavencom"),
-    name("burnnft"),
-    make_tuple( user, to_delete )
-  ).send();
+  if (to_delete.size() > 0) {
+    action(
+      permission_level{ user, name("active") },
+      name("ebonhavencom"),
+      name("burnnft"),
+      make_tuple( user, to_delete )
+    ).send();
+  }
 
   vector<uint64_t> enc_to_delete;
   for (auto& enc: encounters) {
@@ -145,15 +142,15 @@ ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
   for (uint64_t del: enc_to_delete) {
     auto itr = encounters.find(del);
     if (itr != encounters.end()) {
-        encounters.erase(itr);
+      encounters.erase(itr);
     }
   }
 
   vector<uint64_t> rew_to_delete;
   for (auto& rew: rewards) {
-      if (rew.character_id == character_id) {
-          rew_to_delete.push_back(rew.reward_id);
-      }
+    if (rew.character_id == character_id) {
+      rew_to_delete.push_back(rew.reward_id);
+    }
   }
 
   for (uint64_t del: rew_to_delete) {
@@ -207,11 +204,8 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
     check(stat.attributes.is_consumable() || stat.attributes.effects.size() > 0, "item cannot be used");
 
     auto effect = effects.get(stat.attributes.effects[effect_idx], "couldn't find effect");
-    if (c.hp == 0) {
-      check(effect.can_resurrect(), "character ko'd and cannot use item");
-    } else if (c.hp > 0) {
-      check(!effect.can_resurrect(), "character alive. cannot use item");
-    }
+    check(!effect.can_resurrect(), "cannot use items that ressurect. must use revive action");
+    check(c.hp > 0, "cannot use items while dead");
     
     // Apply effect to character
     if (effect.effect_type == 0) {
@@ -265,8 +259,8 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
   auto acct = accounts_table.get(user.value, "couldn't find account");
   auto c = characters_table.get(character_id, "couldn't find character");
   check(user == c.owner, "character does not belong to user");
-  check(c.status == 0, "character status doesn't allow equipping items");
-  check(c.hp > 0, "character ko'd. cannot equip items");
+  check(c.status != 4, "character cannot equip items in combat");
+  check(c.hp > 0, "cannot equip items while dead");
   auto item = items.get(dgood_id, "couldn't find item");
   
   reset_stats( c );
@@ -423,6 +417,7 @@ ACTION ebonhaven::buyability( name user, uint64_t character_id, uint64_t ability
 
   auto c = characters.get(character_id, "couldn't find character");
   check(c.status == 0, "character status doesn't allow buying abilities");
+  check(c.hp > 0, "cannot buy abilities while dead");
   check(user == c.owner, "character does not belong to user");
   auto ability = abilities.get(ability_id, "couldn't find ability");
   auto info = history.get(character_id, "couldn't find character info");
@@ -461,7 +456,7 @@ ACTION ebonhaven::equipability( name user, uint64_t character_id, uint64_t abili
   auto c = characters.get(character_id, "couldn't find character");
   check(user == c.owner, "character does not belong to user");
   check(c.status == 0, "character status doesn't allow equipping abilities");
-  check(c.hp > 0, "character ko'd. cannot equip abilities");
+  check(c.hp > 0, "cannot equip abilities while dead");
   auto ability = abilities.get(ability_id, "couldn't find ability");
   auto info = history.get(character_id, "couldn't find character info");
   check(find(info.learned_abilities.begin(), info.learned_abilities.end(), ability_id) != info.learned_abilities.end(), "character has not learned this ability");
@@ -575,6 +570,7 @@ ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
   vector<uint64_t> to_burn = {
     key.id, chest.id
   };
+
   action(
     permission_level{ user, name("active") },
     name("ebonhavencom"),

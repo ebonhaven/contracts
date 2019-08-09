@@ -5,6 +5,7 @@
 #include "character.cpp"
 #include "game.cpp"
 #include "items.cpp"
+#include "quests.cpp"
 #include "skills.cpp"
 #include "token.cpp"
 
@@ -41,6 +42,7 @@ EOSIO_DISPATCH(ebonhaven,
   (delcharacter)
   (move)
   (combat)
+  (revive)
   (claimrewards)
   (useitem)
   (equipitem)
@@ -49,6 +51,8 @@ EOSIO_DISPATCH(ebonhaven,
   (unlock)
   (craft)
   (gather)
+  (acceptquest)
+  (endquest)
   (printval)
   (spawnitem)
   (spawnability)
@@ -60,6 +64,7 @@ EOSIO_DISPATCH(ebonhaven,
   (transfernft)
   (burnnft)
   (modstatus)
+  (modhp)
   (upsaura)
   (upsability)
   (upseffect)
@@ -72,6 +77,8 @@ EOSIO_DISPATCH(ebonhaven,
   (upsmapdata)
   (upsrecipe)
   (gentreasure)
+  (upsquest)
+  (upsnpc)
   (setconfig)
   (tokenreward)
   (tokenissue)

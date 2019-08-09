@@ -9,6 +9,7 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
   recipes_index recipes(get_self(), get_self().value);
   dgoods_index dgoods(get_self(), get_self().value);
   auto character = characters.get(character_id, "couldn't find character");
+  check(character.hp > 0, "cannot craft while dead");
   check(character.status == 0, "character status does not allow crafting");
   auto history = charhistory.get(character_id, "couldn't find history");
   bool found = (find(history.learned_recipes.begin(), history.learned_recipes.end(), recipe_id) != history.learned_recipes.end());
@@ -50,6 +51,7 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
   characters_index characters(get_self(), user.value);
   charhistory_index charhistory(get_self(), user.value);
   auto character = characters.get(character_id, "couldn't find character");
+  check(character.hp > 0, "cannot gather while dead");
   check(character.status == 2, "character status doesn't allow gathering");
   auto history = charhistory.get(character_id, "couldn't find history");
   resources_index resources(get_self(), character.profession);
