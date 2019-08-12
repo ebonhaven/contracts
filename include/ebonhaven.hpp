@@ -8,14 +8,14 @@
 #include <math.h>
 #include "json.hpp"
 #include "types.hpp"
-#include "dasset.hpp"
 #include "attributes.hpp"
+#include "utility.hpp"
 
 using namespace eosio;
 using namespace std;
 using namespace types;
-using namespace dgoods_asset;
 using namespace item_attributes;
+using namespace utility;
 
 CONTRACT ebonhaven : public contract {
   
@@ -69,7 +69,7 @@ CONTRACT ebonhaven : public contract {
       skill            profession_skill;
       vector<uint64_t> learned_abilities;
       vector<uint64_t> learned_recipes;
-      vector<name> completed_quests;
+      vector<name>     completed_quests;
       vector<uint64_t> feats;
       
       uint64_t primary_key() const { return character_id; }
@@ -198,7 +198,7 @@ CONTRACT ebonhaven : public contract {
       uint64_t     reward_id;
       uint64_t     character_id;
       uint64_t     encounter_id;
-      uint32_t     experience;
+      uint32_t     experience = 0;
       asset        worth = asset(0, symbol(symbol_code("EBON"), 2));
       vector<name> items;
       
@@ -214,11 +214,13 @@ CONTRACT ebonhaven : public contract {
     
     // Scope is profession id
     TABLE resource {
-      uint64_t world_zone_id;
+      name     resource_name;
+      uint8_t  profession_id;
+      uint32_t experience = 0;
       uint32_t min_skill;
       vector<resource_drop> drops;
       
-      uint64_t primary_key() const { return world_zone_id; }
+      auto primary_key() const { return resource_name.value; }
     };
     
     // dGoods
@@ -227,12 +229,23 @@ CONTRACT ebonhaven : public contract {
 
       uint64_t primary_key() const { return category.value; }
     };
+
+    TABLE asks {
+      uint64_t batch_id;
+      vector<uint64_t> dgood_ids;
+      name seller;
+      asset amount;
+      time_point_sec expiration;
+
+      uint64_t primary_key() const { return batch_id; }
+      uint64_t get_seller() const { return seller.value; }
+    };
     
     TABLE balances {
       uint64_t category_name_id;
       name category;
       name token_name;
-      dasset amount;
+      asset amount;
 
       uint64_t primary_key() const { return category_name_id; }
     };
@@ -241,13 +254,16 @@ CONTRACT ebonhaven : public contract {
     TABLE dgoodstats {
       bool     fungible;
       bool     burnable;
+      bool     sellable;
       bool     transferable;
       name     issuer;
+      name     rev_partner;
       name     token_name;
       uint64_t category_name_id;
-      dasset   max_supply;
-      uint64_t current_supply;
-      uint64_t issued_supply;
+      asset    max_supply;
+      asset    current_supply;
+      asset    issued_supply;
+      double   rev_split;
       string   base_uri;
       stat_attributes attributes;
 
@@ -270,15 +286,23 @@ CONTRACT ebonhaven : public contract {
     
     EOSLIB_SERIALIZE( dgood, (id)(serial_number)(owner)(category)(token_name)(relative_uri)(equipped)(attributes) )
     
+    TABLE lockednfts {
+      uint64_t dgood_id;
+
+      uint64_t primary_key() const { return dgood_id; }
+    };
+
     // Scope is user
     TABLE mapdata {
-      uint64_t         world_zone_id; // primary
-      uint64_t         character_id = 0;
-      position         respawn;
-      vector<tiledata> tiles;
-      vector<trigger>  triggers;
-      vector<mobdata>  mobs;
-      vector<npcdata>  npcs;
+      uint64_t          world_zone_id; // primary
+      uint64_t          character_id = 0;
+      position          respawn;
+      vector<tiledata>  tiles;
+      vector<trigger>   triggers;
+      vector<mobdata>   mobs;
+      vector<npcdata>   npcs;
+      vector<zone_drop> resources;
+      rate_mod          rate_modifier;
       
       uint64_t primary_key() const { return world_zone_id; }
       uint64_t by_character_id() const { return character_id; }
@@ -322,6 +346,13 @@ CONTRACT ebonhaven : public contract {
 
       uint64_t primary_key() const { return npc_id; }
     };
+
+    TABLE progress {
+      uint8_t  level;
+      uint64_t experience;
+
+      uint8_t primary_key() const { return level; }
+    };
     
     // TABLES
     using globals_index = singleton< "globals"_n, globals >;
@@ -360,6 +391,11 @@ CONTRACT ebonhaven : public contract {
     
     using dgoods_index = multi_index< "dgood"_n, dgood,
             indexed_by< "byowner"_n, const_mem_fun< dgood, uint64_t, &dgood::get_owner> > >;
+
+    using asks_index = multi_index< "asks"_n, asks,
+            indexed_by< "byseller"_n, const_mem_fun< asks, uint64_t, &asks::get_seller> > >;
+
+    using lock_index = multi_index< "lockednfts"_n, lockednfts>;
             
     using mapdata_index = multi_index< "mapdata"_n, mapdata,
             indexed_by< "bycharacterid"_n, const_mem_fun< mapdata, uint64_t, &mapdata::by_character_id> > >;
@@ -370,12 +406,19 @@ CONTRACT ebonhaven : public contract {
             indexed_by< "byquestid"_n, const_mem_fun< quest, uint64_t, &quest::by_quest_id> > >;
 
     using npcs_index = multi_index< "npcs"_n, npc>;
-            
-    void mint( name to, name issuer, name category, name token_name,
-               uint64_t issued_supply, string relative_uri, dgood_attributes attributes );
-    void add_balance( name owner, name issuer, name category, name token_name,
-                     uint64_t category_name_id, dasset quantity );
-    void sub_balance( name owner, uint64_t category_name_id, dasset quantity );
+
+    using progress_index = multi_index< "progress"_n, progress>;
+
+    // dGoods
+    map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller);
+    void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
+    void _checkasset( asset amount, bool fungible );
+    void _mint( name to, name issuer, name category, name token_name,
+               asset issued_supply, string relative_uri, dgood_attributes attributes );
+    void _add_balance( name owner, name ram_payer, name category, name token_name,
+                     uint64_t category_name_id, asset quantity );
+    void _sub_balance( name owner, uint64_t category_name_id, asset quantity );
+
     void apply_effect_to_character( effect e, character& c );
     void reset_stats( character& c );
     void add_item_stats( name user, character& c );
@@ -391,7 +434,7 @@ CONTRACT ebonhaven : public contract {
                                  name payer,
                                  uint32_t character_level,
                                  encounter s_encounter );
-    void generate_resource_reward( name user, name payer, uint64_t character_it, vector<name> resource_items );
+    void generate_resource_reward( name user, name payer, uint64_t character_it, uint32_t experience, vector<name> resource_items );
     name roll_treasure( ebonhaven::character& character );
     void generate_treasure( name user, name payer, ebonhaven::character& character );
     uint32_t calculate_total_experience(uint32_t character_level, ebonhaven::encounter e);
@@ -465,6 +508,8 @@ CONTRACT ebonhaven : public contract {
     ebonhaven(eosio::name receiver, eosio::name code, datastream<const char*> ds):contract(receiver, code, ds) {}
     
     const int WEEK_SEC = 3600*24*7;
+    const int THREE_DAY_SEC = 3600*24*3;
+    const int ONE_DAY_SEC = 3600*24;
     
     ACTION newaccount( name user );
 
@@ -502,8 +547,23 @@ CONTRACT ebonhaven : public contract {
 
     ACTION endquest( name user, uint64_t character_id, uint64_t npc_id, uint64_t quest_id );
     
-    ACTION printval( name user, uint64_t x, uint64_t y );
+    ACTION buynft( name from, name to, asset quantity, string memo );
+
+    ACTION transfernft( name from,
+                        name to,
+                        vector<uint64_t> dgood_ids,
+                        string memo);
     
+    ACTION burnnft( name owner,
+                    vector<uint64_t> dgood_ids );
+    
+    ACTION listsalenft( name seller,
+                        vector<uint64_t> dgood_ids,
+                        asset net_sale_amount );
+
+    ACTION closesalenft( name seller,
+                         uint64_t batch_id );
+
     // Admin
     ACTION spawnitem( name to, name token_name );
     
@@ -523,30 +583,26 @@ CONTRACT ebonhaven : public contract {
     ACTION delencounter( name user, uint64_t encounter_id );
     
     // Admin
-    ACTION create( name category,
+    ACTION create( name rev_partner,
+                   name category,
                    name token_name,
                    bool fungible,
                    bool burnable,
+                   bool sellable,
                    bool transferable,
+                   double rev_split,
                    stat_attributes attributes,
                    string base_uri,
-                   string max_supply );
+                   asset max_supply );
+
     // Admin
-    ACTION issue(name to,
-                 name category,
-                 name token_name,
-                 string quantity,
-                 string relative_uri,
-                 string creator_name,
-                 string memo);
-  
-    ACTION transfernft(name from,
-                       name to,
-                       vector<uint64_t> dgood_ids,
-                       string memo);
-    
-    ACTION burnnft(name owner,
-                   vector<uint64_t> dgood_ids);
+    ACTION issue( name to,
+                  name category,
+                  name token_name,
+                  asset quantity,
+                  string relative_uri,
+                  string creator_name,
+                  string memo );
     
     // Admin
     ACTION modstatus( name user, uint64_t character_id, uint8_t status );
@@ -594,7 +650,7 @@ CONTRACT ebonhaven : public contract {
     // Admin                     
     ACTION upsrates( float_t combat_rate,
                      float_t resource_rate,
-                     float_t discovery_rate,
+                     float_t secret_rate,
                      float_t trap_rate, 
                      float_t treasure_rate,
                      float_t loot_rate );
@@ -616,8 +672,9 @@ CONTRACT ebonhaven : public contract {
     ACTION upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, vector<item_drop> item_drops);
     
     // Admin
-    ACTION upsresource( uint64_t world_zone_id,
+    ACTION upsresource( name resource_name,
                         uint8_t  profession_id,
+                        uint32_t experience,
                         uint32_t min_skill,
                         vector<resource_drop> drops );
                      
@@ -632,7 +689,9 @@ CONTRACT ebonhaven : public contract {
                        vector<tiledata> tiles,
                        vector<trigger> triggers,
                        vector<mobdata> mobs,
-                       vector<npcdata> npcs );
+                       vector<npcdata> npcs,
+                       vector<zone_drop> resources,
+                       rate_mod rate_modifier );
 
     // Admin
     ACTION upsrecipe( uint64_t recipe_id,
@@ -665,6 +724,9 @@ CONTRACT ebonhaven : public contract {
     ACTION upsnpc( uint64_t npc_id,
                    vector<name> quests,
                    vector<uint64_t> triggers );
+
+    // Admin
+    ACTION upsprogress( uint8_t level, uint64_t experience );
 
     // Admin                     
     ACTION setconfig(string version);

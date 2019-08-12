@@ -5,3 +5,4 @@ package-lock.json
 data/
 nodeos.log
 keosd.log
+.DS_Store

@@ -1,6 +1,6 @@
 #define RANDOM_FACTOR 0.2
 #define ARMORED_FACTOR 0.15
-#define MAX_LEVEL 60
+#define MAX_LEVEL 10
 
 #include <ebonhaven.hpp>
 
@@ -49,13 +49,13 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
   
   globals_index globals_table( get_self(), get_self().value );
   auto global_singleton = globals_table.get();
-  
-  int LOOT_MAX = rate_to_floor(global_singleton.rates.loot, range);
-  int TREASURE_MAX = rate_to_floor(global_singleton.rates.treasure, range) + LOOT_MAX;
-  int TRAP_MAX = rate_to_floor(global_singleton.rates.trap, range) + TREASURE_MAX;
-  int DISCOVERY_MAX = rate_to_floor(global_singleton.rates.discovery, range) + TRAP_MAX;
-  int RESOURCE_MAX = rate_to_floor(global_singleton.rates.resource, range) + DISCOVERY_MAX;
-  int COMBAT_MAX = rate_to_floor(global_singleton.rates.combat, range) + RESOURCE_MAX;
+
+  int LOOT_MAX = rate_to_floor(global_singleton.rates.loot * md->rate_modifier.loot, range);
+  int TREASURE_MAX = rate_to_floor(global_singleton.rates.treasure * md->rate_modifier.treasure, range) + LOOT_MAX;
+  int TRAP_MAX = rate_to_floor(global_singleton.rates.trap * md->rate_modifier.trap, range) + TREASURE_MAX;
+  int SECRET_MAX = rate_to_floor(global_singleton.rates.secret * md->rate_modifier.secret, range) + TRAP_MAX;
+  int RESOURCE_MAX = rate_to_floor(global_singleton.rates.resource * md->rate_modifier.resource, range) + SECRET_MAX;
+  int COMBAT_MAX = rate_to_floor(global_singleton.rates.combat * md->rate_modifier.combat, range) + RESOURCE_MAX;
   
   if (num <= LOOT_MAX) {
     print("Outcome is: LOOT");
@@ -67,10 +67,10 @@ ACTION ebonhaven::move( name user, uint64_t character_id, position new_position)
   } else if (num > TREASURE_MAX && num <= TRAP_MAX) {
     print("Outcome is: TRAP");
     character.status = 3;
-  } else if (num > TRAP_MAX && num <= DISCOVERY_MAX) {
-    print("Outcome is: DISCOVERY");
+  } else if (num > TRAP_MAX && num <= SECRET_MAX) {
+    print("Outcome is: SECRET");
     character.status = 1;
-  } else if (num > DISCOVERY_MAX && num <= RESOURCE_MAX) {
+  } else if (num > SECRET_MAX && num <= RESOURCE_MAX) {
     print("Outcome is: RESOURCE");
     character.status = 2;
   } else if (num > RESOURCE_MAX && num <= COMBAT_MAX) {
@@ -453,13 +453,40 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
   }
   
   // Update character
-  if (reward.character_id > 0 && reward.experience > 0) {
+  if (reward.experience > 0) {
     characters_index characters(get_self(), user.value );
     auto character = characters.get( reward.character_id, "couldn't find character" );
-    auto c_itr = characters.find(reward.character_id);
-    characters.modify(c_itr, user, [&](auto& c) {
-      c.experience += reward.experience;
-    });
+
+    if (character.level < MAX_LEVEL) {
+
+      progress_index progress(get_self(), get_self().value);
+      auto lvl = progress.get(character.level, "cannot find experience needed for next level");
+      auto new_exp = character.experience += reward.experience; 
+      if ( new_exp >= lvl.experience ) {
+        character.level++;
+
+        basestats_index basestats(get_self(), get_self().value);
+        auto& base = basestats.get(character.profession, "profession stats not found");
+        character.attack.spell += base.attack_increase.spell;
+        character.attack.physical += base.attack_increase.physical;
+        character.defense.spell += base.defense_increase.spell;
+        character.defense.physical += base.defense_increase.physical;
+        character.stats.luck += base.stats_increase.luck;
+        character.stats.perception += base.stats_increase.perception;
+        character.stats.regen += base.stats_increase.regen;
+        character.stats.skill += base.stats_increase.skill;
+        character.stats.stamina += base.stats_increase.stamina;
+      }
+
+      auto c_itr = characters.find(reward.character_id);
+      characters.modify(c_itr, user, [&](auto& c) {
+        c.attack = character.attack;
+        c.defense = character.defense;
+        c.stats = character.stats;
+        c.level = character.level;
+        c.experience = new_exp;
+      });
+    }
   }
   
   auto r_itr = rewards.find(reward_id);
@@ -565,5 +592,5 @@ void ebonhaven::generate_treasure( name user, name payer, ebonhaven::character& 
   rewards_index rewards(get_self(), user.value);
   name treasure_item = roll_treasure( character );
   vector<name> items = { treasure_item };
-  generate_resource_reward( user, payer, character.character_id, items );
+  generate_resource_reward( user, payer, character.character_id, 0, items );
 }

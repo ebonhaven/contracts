@@ -30,6 +30,18 @@
         "functional": "cpp",
         "bitset": "cpp",
         "chrono": "cpp",
-        "__node_handle": "cpp"
+        "__node_handle": "cpp",
+        "__functional_base": "cpp",
+        "atomic": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "tuple": "cpp",
+        "__string": "cpp",
+        "istream": "cpp",
+        "locale": "cpp",
+        "utility": "cpp",
+        "__locale": "cpp"
     }
 }

@@ -13,6 +13,7 @@ const mapdata = require('../data/mapdata.json').mapdata;
 const recipes = require('../data/recipes.json').recipes;
 const quests = require('../data/quests.json').quests;
 const npcs = require('../data/npcs.json').npcs;
+const progress = require('../data/progress.json').progress;
 const argv = require('yargs').argv
 
 class Seeder {
@@ -331,6 +332,23 @@ class Seeder {
         });
         this.eos.actions(actions);
     }
+
+    seedProgress() {
+        console.log("Seeding progress...");
+        let actions = [];
+        progress.forEach((p) => {
+            let action = {
+                name: "upsprogress",
+                authorization: [{
+                    actor: "ebonhavencom",
+                    permission: "active"
+                }],
+                data: p
+            };
+            actions.push(action);
+        });
+        this.eos.actions(actions);
+    }
 };
 
 const seeder = new Seeder;
@@ -387,6 +405,9 @@ switch(argv._[0]) {
     case "npcs":
         seeder.seedNpcs();
         break;
+    case "progress":
+        seeder.seedProgress();
+        break;
     case "retireall":
         seeder.retireAllItems();
         break;
@@ -407,5 +428,6 @@ switch(argv._[0]) {
         seeder.seedRecipes();
         seeder.seedQuests();
         seeder.seedNpcs();
+        seeder.seedProgress();
         break;
 }

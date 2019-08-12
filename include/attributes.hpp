@@ -5,7 +5,6 @@
 
 using namespace std;
 using namespace eosio;
-using namespace utility;
 
 namespace item_attributes {
   enum class item_type: uint8_t {
@@ -98,7 +97,6 @@ namespace item_attributes {
     const bool is_consumable() {
       return (item_type == 8 || item_type == 11 ? true : false);
     }
-    
   
     EOSLIB_SERIALIZE( stat_attributes, 
       (item_name)(item_description)(item_binding)(level_requirement)

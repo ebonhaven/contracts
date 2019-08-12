@@ -9,15 +9,6 @@
 #include "skills.cpp"
 #include "token.cpp"
 
-ACTION ebonhaven::printval( name user, uint64_t x, uint64_t y )
-{
-  mapdata_index mapdata(get_self(), get_self().value);
-  auto m = mapdata.get(1, "couldn't find map");
-  bool is_walkable = is_coordinate_walkable(m.tiles, x, y);
-  print("Is Walkable: ");
-  print(is_walkable);
-}
-
 // Admin
 ACTION ebonhaven::setconfig(string version)
 {
@@ -36,52 +27,69 @@ ACTION ebonhaven::setconfig(string version)
   globals_table.set(global_singleton, get_self());
 }
 
-EOSIO_DISPATCH(ebonhaven, 
-  (newaccount)
-  (newcharacter)
-  (delcharacter)
-  (move)
-  (combat)
-  (revive)
-  (claimrewards)
-  (useitem)
-  (equipitem)
-  (buyability)
-  (equipability)
-  (unlock)
-  (craft)
-  (gather)
-  (acceptquest)
-  (endquest)
-  (printval)
-  (spawnitem)
-  (spawnability)
-  (newencounter)
-  (modencounter)
-  (delencounter)
-  (create)
-  (issue)
-  (transfernft)
-  (burnnft)
-  (modstatus)
-  (modhp)
-  (upsaura)
-  (upsability)
-  (upseffect)
-  (upsstats)
-  (upsrates)
-  (upsmob)
-  (upsdrop)
-  (upsresource)
-  (upstreasure)
-  (upsmapdata)
-  (upsrecipe)
-  (gentreasure)
-  (upsquest)
-  (upsnpc)
-  (setconfig)
-  (tokenreward)
-  (tokenissue)
-  (tokenxfer)
-  (tokenretire)
-)
+extern "C" {
+  void apply( uint64_t receiver, uint64_t code, uint64_t action ) {
+    auto self = receiver;
+    if ( code == self ) {
+      switch( action ) {
+        EOSIO_DISPATCH_HELPER(ebonhaven, 
+          (newaccount)
+          (newcharacter)
+          (delcharacter)
+          (move)
+          (combat)
+          (revive)
+          (claimrewards)
+          (useitem)
+          (equipitem)
+          (buyability)
+          (equipability)
+          (unlock)
+          (craft)
+          (gather)
+          (acceptquest)
+          (endquest)
+          (spawnitem)
+          (spawnability)
+          (newencounter)
+          (modencounter)
+          (delencounter)
+          (create)
+          (issue)
+          (transfernft)
+          (burnnft)
+          (listsalenft)
+          (closesalenft)
+          (modstatus)
+          (modhp)
+          (upsaura)
+          (upsability)
+          (upseffect)
+          (upsstats)
+          (upsrates)
+          (upsmob)
+          (upsdrop)
+          (upsresource)
+          (upstreasure)
+          (upsmapdata)
+          (upsrecipe)
+          (gentreasure)
+          (upsquest)
+          (upsnpc)
+          (upsprogress)
+          (setconfig)
+          (tokenreward)
+          (tokenissue)
+          (tokenxfer)
+          (tokenretire)
+        )
+      }
+    } else {
+      if ( code == name("eosio.token").value && action == name("transfer").value ) {
+        execute_action( name(receiver), name(code), &ebonhaven::buynft );
+      }
+    }
+  }
+}
+
+

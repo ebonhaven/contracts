@@ -1,11 +1,14 @@
 {
   "items": [
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "weapon1",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Meat Cleaver",
         "item_description": "",
@@ -24,11 +27,14 @@
       "max_supply": 100
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "weapon2",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Staff of Enders",
         "item_description": "",
@@ -47,11 +53,14 @@
       "max_supply": 100
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "potion1",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Minor Health Potion",
         "item_description": "",
@@ -70,11 +79,14 @@
       "max_supply": 10000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "market1",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Resurrection Stone",
         "item_description": "",
@@ -93,11 +105,14 @@
       "max_supply": 10000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "recipe1",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Recipe: Meat Cleaver",
         "item_description": "",
@@ -116,11 +131,14 @@
       "max_supply": 2000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "resource1",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Copper Ore",
         "item_description": "",
@@ -139,11 +157,14 @@
       "max_supply": 100000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "resource2",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Crude Malachite",
         "item_description": "",
@@ -162,11 +183,14 @@
       "max_supply": 10000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "resource3",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Bayleaf",
         "item_description": "",
@@ -185,11 +209,14 @@
       "max_supply": 100000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "resource4",
       "fungible": false,
       "burnable": true,
+      "sellable": true,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Crude Blood",
         "item_description": "",
@@ -208,11 +235,14 @@
       "max_supply": 10000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "treasure1",
       "fungible": false,
       "burnable": true,
+      "sellable": false,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Wooden Chest",
         "item_description": "Unlocked by Wooden Key",
@@ -231,11 +261,14 @@
       "max_supply": 10000
     },
     {
+      "rev_partner": "ebonhavendac",
       "category": "ebonhavencom",
       "token_name": "treasure2",
       "fungible": false,
       "burnable": true,
+      "sellable": false,
       "transferable": true,
+      "rev_split": 0.1,
       "attributes": {
         "item_name": "Wooden Key",
         "item_description": "Unlocks Wooden Chest",

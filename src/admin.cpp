@@ -168,7 +168,7 @@ ACTION ebonhaven::upsstats(uint8_t profession,
 
 ACTION ebonhaven::upsrates( float_t combat_rate,
                             float_t resource_rate,
-                            float_t discovery_rate,
+                            float_t secret_rate,
                             float_t trap_rate, 
                             float_t treasure_rate,
                             float_t loot_rate )
@@ -181,7 +181,7 @@ ACTION ebonhaven::upsrates( float_t combat_rate,
   auto new_rates = rates{};
   new_rates.combat = combat_rate;
   new_rates.resource = resource_rate;
-  new_rates.discovery = discovery_rate;
+  new_rates.secret = secret_rate;
   new_rates.trap = trap_rate;
   new_rates.treasure = treasure_rate;
   new_rates.loot = loot_rate;
@@ -266,23 +266,28 @@ ACTION ebonhaven::upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, v
   }
 };
 
-ACTION ebonhaven::upsresource( uint64_t world_zone_id,
+ACTION ebonhaven::upsresource( name resource_name,
                                uint8_t  profession_id,
+                               uint32_t experience,
                                uint32_t min_skill,
                                vector<resource_drop> drops )
 {
   require_auth( get_self() );
   
-  resources_index resources( get_self(), name(profession_id).value );
-  auto itr = resources.find(world_zone_id);
+  resources_index resources( get_self(), get_self().value );
+  auto itr = resources.find(resource_name.value);
   if ( itr == resources.end() ) {
     resources.emplace( get_self(), [&](auto& r) {
-      r.world_zone_id = world_zone_id;
+      r.resource_name = resource_name;
+      r.profession_id = profession_id;
+      r.experience = experience;
       r.min_skill = min_skill;
       r.drops = drops;
     });
   } else {
     resources.modify( itr, get_self(), [&](auto& r) {
+      r.profession_id = profession_id;
+      r.experience = experience;
       r.min_skill = min_skill;
       r.drops = drops;
     });
@@ -437,7 +442,9 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
                               vector<tiledata> tiles,
                               vector<trigger> triggers,
                               vector<mobdata> mobs,
-                              vector<npcdata> npcs )
+                              vector<npcdata> npcs,
+                              vector<zone_drop> resources,
+                              rate_mod rate_modifier )
 {
   require_auth( get_self() );
   
@@ -482,8 +489,26 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
     };
     updated_npcs.push_back(new_npc);
   }
+
+  vector<zone_drop> updated_resources;
+  for (auto& r: resources) {
+    zone_drop new_drop {
+      r.profession_id,
+      r.resource_name
+    };
+    updated_resources.push_back(new_drop);
+  }
+
+  rate_mod updated_rates {
+    rate_modifier.combat,
+    rate_modifier.resource,
+    rate_modifier.secret,
+    rate_modifier.trap,
+    rate_modifier.treasure,
+    rate_modifier.loot
+  };
   
-  if ( user.value == get_self().value ) {
+  if ( user == get_self() ) {
     mapdata_index mapdata(get_self(), get_self().value);
     auto itr = mapdata.find(world_zone_id);
     if ( itr == mapdata.end() ) {
@@ -494,6 +519,8 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
         m.triggers = updated_triggers;
         m.mobs = updated_mobs;
         m.npcs = updated_npcs;
+        m.resources = updated_resources;
+        m.rate_modifier = updated_rates;
       });
     } else {
       mapdata.modify( itr, get_self(), [&](auto& m) {
@@ -503,6 +530,8 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
         m.triggers = updated_triggers;
         m.mobs = updated_mobs;
         m.npcs = updated_npcs;
+        m.resources = updated_resources;
+        m.rate_modifier = updated_rates;
       });
     }
   } else {
@@ -519,6 +548,8 @@ ACTION ebonhaven::upsmapdata( uint64_t world_zone_id,
       m.triggers = updated_triggers;
       m.mobs = updated_mobs;
       m.npcs = updated_npcs;
+      m.resources = updated_resources;
+      m.rate_modifier = updated_rates;
     });
   }
 }
@@ -657,6 +688,24 @@ ACTION ebonhaven::upsnpc( uint64_t npc_id,
       n.npc_id = npc_id;
       n.quests = quests;
       n.triggers = triggers;
+    });
+  }
+}
+
+ACTION ebonhaven::upsprogress( uint8_t level, uint64_t experience )
+{
+  require_auth( get_self() );
+
+  progress_index progress(get_self(), get_self().value);
+  auto itr = progress.find(level);
+  if (itr != progress.end()) {
+    progress.modify( itr, get_self(), [&](auto& p) {
+      p.experience = experience;
+    });
+  } else {
+    progress.emplace( get_self(), [&](auto& p) {
+      p.level = level;
+      p.experience = experience;
     });
   }
 }

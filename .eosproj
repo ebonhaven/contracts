@@ -6,7 +6,7 @@
   "cdt": "cmd",
   "output": "",
   "scripts": {
-    "build": "eosio-cpp -abigen -I include -contract ebonhaven -o ebonhaven.wasm src/ebonhaven.cpp"
+    "build": ""
   },
   "deploy": {
     "target": "both",

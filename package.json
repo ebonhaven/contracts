@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "eosio-cpp -abigen -w -I include -contract ebonhaven -o ebonhaven.wasm src/ebonhaven.cpp",
     "seed": "node scripts/seed.js",
     "seed:characters": "node scripts/seed.js characters",
     "seed:accounts": "node scripts/seed.js accounts",

@@ -117,7 +117,7 @@ namespace types {
   struct stats {
     // Increase max health
     uint32_t stamina = 0;
-    // Increase health regeneration out of combat
+    // Increase health regeneration
     uint32_t regen = 0;
     // Improved chance of resource encounter
     uint32_t perception = 0;
@@ -126,11 +126,20 @@ namespace types {
     // Improved chance of finding treasure
     uint32_t luck = 0;
   };
+
+  struct rate_mod {
+    float_t        combat = 1.00;
+    float_t        resource = 1.00;
+    float_t        secret = 1.00;
+    float_t        trap = 1.00;
+    float_t        treasure = 1.00;
+    float_t        loot = 1.00;
+  };
   
   struct rates {
     float_t        combat = 0.15;
     float_t        resource = 0.09;
-    float_t        discovery = 0.025;
+    float_t        secret = 0.025;
     float_t        trap = 0.017;
     float_t        treasure = 0.005;
     float_t        loot = 0.0015;
@@ -164,6 +173,11 @@ namespace types {
     name    token_name;
     uint8_t min_items;
     uint8_t max_items;
+  };
+
+  struct zone_drop {
+    uint8_t profession_id;
+    name    resource_name;
   };
   
   struct combatslots {

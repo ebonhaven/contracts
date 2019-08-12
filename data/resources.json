@@ -1,8 +1,9 @@
 {
   "resources": [
     {
-      "world_zone_id": 1,
+      "resource_name": "zone1",
       "profession_id": 1,
+      "experience": 5,
       "min_skill": 1,
       "drops": [
         {

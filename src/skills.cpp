@@ -50,12 +50,22 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
   require_auth( user );
   characters_index characters(get_self(), user.value);
   charhistory_index charhistory(get_self(), user.value);
+  mapdata_index mapdata_table(get_self(), user.value);
   auto character = characters.get(character_id, "couldn't find character");
   check(character.hp > 0, "cannot gather while dead");
   check(character.status == 2, "character status doesn't allow gathering");
   auto history = charhistory.get(character_id, "couldn't find history");
-  resources_index resources(get_self(), character.profession);
-  auto resource = resources.get(character.position.world_zone_id, "couldn't find resource");
+
+  auto md = find_if(mapdata_table.begin(), mapdata_table.end(),
+    [&character](const struct mapdata& el){ return el.world_zone_id == character.position.world_zone_id &&
+                                            el.character_id == character.character_id; });
+  check(md != mapdata_table.end(), "cannot find mapdata for character");
+  auto zd = find_if(md->resources.begin(), md->resources.end(),
+    [&character](const struct zone_drop& el){ return el.profession_id == character.profession; });
+
+  check(zd != md->resources.end(), "cannot find resources for profession in mapdata");
+  resources_index resources(get_self(), get_self().value);
+  auto resource = resources.get(zd->resource_name.value, "couldn't find resource");
 
   check(history.profession_skill.gather >= resource.min_skill, "gathering skill not high enough");
 
@@ -77,7 +87,7 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
     }
   }
 
-  generate_resource_reward( user, user, character_id, reward_items );
+  generate_resource_reward( user, user, character_id, resource.experience, reward_items );
 
   if (character.status == 2) {
     auto c_itr = characters.find(character_id);
@@ -92,13 +102,14 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
   }
 }
 
-void ebonhaven::generate_resource_reward( name user, name payer, uint64_t character_id, vector<name> resource_items ) {
+void ebonhaven::generate_resource_reward( name user, name payer, uint64_t character_id, uint32_t experience, vector<name> resource_items ) {
   rewards_index rewards(get_self(), user.value);
 
   reward rew = {};
   rew.reward_id = rewards.available_primary_key();
   if (rew.reward_id == 0) { rew.reward_id++; }
   rew.character_id = character_id;
+  rew.experience = experience;
   rew.items = resource_items;
   rewards.emplace( payer, [&](auto& r) {
     r = rew;

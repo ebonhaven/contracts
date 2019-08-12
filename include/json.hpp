@@ -1,3 +1,4 @@
+#pragma once
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++

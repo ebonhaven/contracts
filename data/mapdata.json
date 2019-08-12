@@ -73,7 +73,18 @@
           "radius": 1.5,
           "attributes": ""
         }
-      ]
+      ],
+      "resources": [
+        { "profession_id": 1, "resource_name": "zone1" }
+      ],
+      "rate_modifier": {
+        "combat": 1.00,
+        "resource": 1.00,
+        "secret": 1.00,
+        "trap": 1.00,
+        "treasure": 1.00,
+        "loot": 1.00
+      }
     },
     {
       "world_zone_id": 2,
@@ -111,7 +122,18 @@
         }
       ],
       "mobs": [],
-      "npcs": []
+      "npcs": [],
+      "resources": [
+        { "profession_id": 1, "resource_name": "zone1" }
+      ],
+      "rate_modifier": {
+        "combat": 1.00,
+        "resource": 1.00,
+        "secret": 1.00,
+        "trap": 1.00,
+        "treasure": 1.00,
+        "loot": 1.00
+      }
     }
   ]
 }
