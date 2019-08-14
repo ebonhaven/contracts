@@ -364,7 +364,7 @@ CONTRACT ebonhaven : public contract {
     using charhistory_index = multi_index< "charhistory"_n, charhistory >;
     
     using basestats_index = multi_index< "basestats"_n, basestat >;
-    
+
     using auras_index = multi_index< "auras"_n, aura >;
     
     using effects_index = multi_index< "effects"_n, effect >;
@@ -507,6 +507,7 @@ CONTRACT ebonhaven : public contract {
     using contract::contract;
     ebonhaven(eosio::name receiver, eosio::name code, datastream<const char*> ds):contract(receiver, code, ds) {}
     
+    const name ADMIN_CONTRACT = name("ebonhavenadm");
     const int WEEK_SEC = 3600*24*7;
     const int THREE_DAY_SEC = 3600*24*3;
     const int ONE_DAY_SEC = 3600*24;
@@ -547,8 +548,6 @@ CONTRACT ebonhaven : public contract {
 
     ACTION endquest( name user, uint64_t character_id, uint64_t npc_id, uint64_t quest_id );
     
-    ACTION buynft( name from, name to, asset quantity, string memo );
-
     ACTION transfernft( name from,
                         name to,
                         vector<uint64_t> dgood_ids,
@@ -557,6 +556,8 @@ CONTRACT ebonhaven : public contract {
     ACTION burnnft( name owner,
                     vector<uint64_t> dgood_ids );
     
+    void buynft( name from, name to, asset quantity, string memo );
+
     ACTION listsalenft( name seller,
                         vector<uint64_t> dgood_ids,
                         asset net_sale_amount );
@@ -609,43 +610,6 @@ CONTRACT ebonhaven : public contract {
 
     // Admin
     ACTION modhp( name user, uint64_t character_id, uint64_t health );
-
-    // Admin
-    ACTION upsaura( uint64_t aura_id,
-                    string aura_name, 
-                    string aura_description,
-                    uint8_t aura_type,
-                    uint8_t is_hidden,
-                    uint8_t cooldown, 
-                    string& aura_data );
-    
-    // Admin                
-    ACTION upsability( uint64_t ability_id,
-                       string ability_name,
-                       string ability_description,
-                       asset ability_cost,
-                       uint32_t level,
-                       uint8_t profession_lock,
-                       uint8_t race_lock,
-                       string ability_data );
-    
-    // Admin
-    ACTION upseffect( uint64_t effect_id,
-                      uint8_t effect_type,
-                      float_t chance,
-                      uint8_t cooldown,
-                      string& effect_data );
-                                 
-    // Admin
-    ACTION upsstats( uint8_t profession,
-                     uint8_t base_hp,
-                     uint8_t hp_increase,
-                     attack  base_attack,
-                     defense base_defense,
-                     attack  attack_increase,
-                     defense defense_increase,
-                     stats   base_stats,
-                     stats   stats_increase );
                      
     // Admin                     
     ACTION upsrates( float_t combat_rate,
@@ -654,79 +618,9 @@ CONTRACT ebonhaven : public contract {
                      float_t trap_rate, 
                      float_t treasure_rate,
                      float_t loot_rate );
-                     
-    // Admin
-    ACTION upsmob( uint32_t mob_id,
-                   string   mob_name,
-                   uint8_t  level,
-                   uint8_t  mob_type,
-                   attack   attack,
-                   defense  defense,
-                   string   mob_data,
-                   uint32_t hp,
-                   uint32_t experience,
-                   asset    worth,
-                   uint64_t drop_id );
-    
-    // Admin                 
-    ACTION upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, vector<item_drop> item_drops);
-    
-    // Admin
-    ACTION upsresource( name resource_name,
-                        uint8_t  profession_id,
-                        uint32_t experience,
-                        uint32_t min_skill,
-                        vector<resource_drop> drops );
-                     
-    // Admin
-    ACTION upstreasure( uint64_t world_zone_id, vector<item_drop> drops );
-    
-    // Admin
-    ACTION upsmapdata( uint64_t world_zone_id,
-                       name user,
-                       uint64_t character_id,
-                       position respawn,
-                       vector<tiledata> tiles,
-                       vector<trigger> triggers,
-                       vector<mobdata> mobs,
-                       vector<npcdata> npcs,
-                       vector<zone_drop> resources,
-                       rate_mod rate_modifier );
-
-    // Admin
-    ACTION upsrecipe( uint64_t recipe_id,
-                      name category,
-                      name token_name,
-                      uint8_t profession_lock,
-                      uint32_t min_skill,
-                      vector<requirement> requirements );
     
     // Admin
     ACTION gentreasure( name user, uint64_t character_id );
-    
-    // Admin
-    ACTION upsquest( name user,
-                     uint64_t character_id,
-                     name quest_name,
-                     uint64_t begin_npc_id,
-                     uint8_t min_level,
-                     uint64_t complete_npc_id,
-                     asset worth,
-                     uint32_t experience,
-                     vector<name> rewards,
-                     uint8_t repeatable,
-                     vector<uint64_t> prerequisites,
-                     uint8_t profession_lock,
-                     uint8_t race_lock,
-                     vector<objective> objectives );
-    
-    // Admin
-    ACTION upsnpc( uint64_t npc_id,
-                   vector<name> quests,
-                   vector<uint64_t> triggers );
-
-    // Admin
-    ACTION upsprogress( uint8_t level, uint64_t experience );
 
     // Admin                     
     ACTION setconfig(string version);

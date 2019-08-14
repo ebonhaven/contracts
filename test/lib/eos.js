@@ -20,6 +20,10 @@ class EOS {
         });
     };
 
+    setAccount(account) {
+      this.account = account;
+    }
+
     async getInfo() {
         let response = await this.rpc.get_info();
         return response;

@@ -62,32 +62,19 @@ extern "C" {
           (closesalenft)
           (modstatus)
           (modhp)
-          (upsaura)
-          (upsability)
-          (upseffect)
-          (upsstats)
           (upsrates)
-          (upsmob)
-          (upsdrop)
-          (upsresource)
-          (upstreasure)
-          (upsmapdata)
-          (upsrecipe)
           (gentreasure)
-          (upsquest)
-          (upsnpc)
-          (upsprogress)
           (setconfig)
           (tokenreward)
           (tokenissue)
           (tokenxfer)
           (tokenretire)
         )
+        break;
       }
-    } else {
-      if ( code == name("eosio.token").value && action == name("transfer").value ) {
-        execute_action( name(receiver), name(code), &ebonhaven::buynft );
-      }
+    } 
+    else if ( code == name("eosio.token").value && action == name("transfer").value ) {
+      execute_action( name(receiver), name(code), &ebonhaven::buynft );
     }
   }
 }

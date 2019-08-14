@@ -172,7 +172,7 @@ ACTION ebonhaven::burnnft(name owner, vector<uint64_t> dgood_ids)
 
     // decrease current supply
     stats_table.modify( dgood_stats, same_payer, [&]( auto& s ) {
-        s.current_supply -= quantity;
+      s.current_supply -= quantity;
     });
 
     // lower balance from owner
@@ -189,24 +189,25 @@ ACTION ebonhaven::listsalenft( name seller,
 {
   require_auth( seller );
 
-  check (dgood_ids.size() <= 20, "max batch size of 20");
-  check( net_sale_amount.amount > .02, "minimum price of at least 0.02 EOS");
+  check( dgood_ids.size() <= 20, "max batch size of 20" );
+  check( net_sale_amount.amount > 0.01, "minimum price of at least 0.01 EOS");
   check( net_sale_amount.symbol == symbol( symbol_code("EOS"), 4), "only accept EOS for sale" );
 
   dgoods_index dgood_table( get_self(), get_self().value );
   for ( auto const& dgood_id: dgood_ids ) {
     const auto& token = dgood_table.get( dgood_id, "token does not exist" );
+    check( token.equipped == 0, "cannot list equipped items");
 
     stats_index stats_table( get_self(), token.category.value );
     const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
 
     check( dgood_stats.sellable == true, "not sellable");
-    check ( seller == token.owner, "not token owner");
+    check( seller == token.owner, "not token owner");
 
     // make sure token not locked;
     lock_index lock_table( get_self(), get_self().value );
     auto locked_nft = lock_table.find( dgood_id );
-    check(locked_nft == lock_table.end(), "token locked");
+    check( locked_nft == lock_table.end(), "token locked" );
 
     // add token to lock table
     lock_table.emplace( seller, [&]( auto& l ) {
@@ -252,10 +253,10 @@ ACTION ebonhaven::closesalenft( name seller,
   }
 }
 
-ACTION ebonhaven::buynft( name from,
-                          name to,
-                          asset quantity,
-                          string memo )
+void ebonhaven::buynft( name from,
+                        name to,
+                        asset quantity,
+                        string memo )
 {
     // allow EOS to be sent by sending with empty string memo
     if ( memo == "deposit" ) return;
@@ -340,6 +341,11 @@ map<name, asset> ebonhaven::_calcfees(vector<uint64_t> dgood_ids, asset ask_amou
 
 void ebonhaven::_changeowner(name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer) {
   check (dgood_ids.size() <= 20, "max batch size of 20");
+
+  accounts_index accounts(get_self(), to.value);
+  auto acct = accounts.get(to.value, "game account not found");
+  check( inventory_count(to) <= acct.max_inventory - dgood_ids.size(), "not enough inventory space");
+
   // loop through vector of dgood_ids, check token exists
   dgoods_index dgood_table( get_self(), get_self().value );
   lock_index lock_table( get_self(), get_self().value );
@@ -350,10 +356,10 @@ void ebonhaven::_changeowner(name from, name to, vector<uint64_t> dgood_ids, str
     const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
 
     if ( istransfer ) {
-        check( token.owner == from, "must be token owner" );
-        check( dgood_stats.transferable == true, "not transferable");
-        auto locked_nft = lock_table.find( dgood_id );
-        check( locked_nft == lock_table.end(), "token locked, cannot transfer");
+      check( token.owner == from, "must be token owner" );
+      check( dgood_stats.transferable == true, "not transferable");
+      auto locked_nft = lock_table.find( dgood_id );
+      check( locked_nft == lock_table.end(), "token locked, cannot transfer");
     }
 
     // notifiy both parties

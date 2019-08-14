@@ -6,7 +6,7 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
   require_auth( user );
   characters_index characters(get_self(), user.value);
   charhistory_index charhistory(get_self(), user.value);
-  recipes_index recipes(get_self(), get_self().value);
+  recipes_index recipes(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   dgoods_index dgoods(get_self(), get_self().value);
   auto character = characters.get(character_id, "couldn't find character");
   check(character.hp > 0, "cannot craft while dead");
@@ -37,11 +37,12 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
     make_tuple( user, to_burn )
   ).send();
 
+  auto quantity = asset(1, symbol(symbol_code("EBON"), 0));
   action(
     permission_level{ get_self(), name("active") },
     name("ebonhavencom"),
     name("issue"),
-    make_tuple( user, name("ebonhavencom"), recipe.token_name, string("1"), string("1"), user.to_string(), string("issued by ebonhavencom"))
+    make_tuple( user, name("ebonhavencom"), recipe.token_name, quantity, string("1"), user.to_string(), string("issued by ebonhavencom"))
   ).send();
 }
 
@@ -64,7 +65,7 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
     [&character](const struct zone_drop& el){ return el.profession_id == character.profession; });
 
   check(zd != md->resources.end(), "cannot find resources for profession in mapdata");
-  resources_index resources(get_self(), get_self().value);
+  resources_index resources(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto resource = resources.get(zd->resource_name.value, "couldn't find resource");
 
   check(history.profession_skill.gather >= resource.min_skill, "gathering skill not high enough");

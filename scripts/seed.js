@@ -31,323 +31,396 @@ class Seeder {
     }
 
     setup() {
-        console.log("Setting up...");
-        let auth = [{
-            actor: 'ebonhavencom',
-            permission: 'active'
-        }];
-        let data = {
-            version: '1.0.0'
-        };
-        this.eos.action("setconfig", auth, data);
+      this.eos.setAccount("ebonhavencom");
+      console.log("Setting up...");
+      let auth = [{
+          actor: 'ebonhavencom',
+          permission: 'active'
+      }];
+      let data = {
+          version: '1.0.0'
+      };
+      this.eos.action("setconfig", auth, data);
     }
 
     createAccounts() {
-        let auth = [{
-            actor: 'eosio',
-            permission: 'active'
-        }]; 
-        config.accounts.forEach((a) => {
-            this.eos.createUser(a.name, auth, a.permissions);
-        }); 
+      let auth = [{
+        actor: 'eosio',
+        permission: 'active'
+      }]; 
+      config.accounts.forEach((a) => {
+        this.eos.createUser(a.name, auth, a.permissions);
+      }); 
+    }
+
+    createTokens() {
+      console.log("Creating EOS...");
+      this.eos.setAccount("eosio.token");
+      let auth = [{
+          actor: 'eosio.token',
+          permission: 'active'
+      }];
+      let data = {
+        issuer: "ebonhavencom",
+        maximum_supply: "1000000000.0000 EOS"
+      };
+      this.eos.action('create', auth, data);
+    }
+
+    issueTokens() {
+      this.eos.setAccount("eosio.token");
+      let auth = [{
+        actor: 'ebonhavencom',
+        permission: 'active'
+      }];
+      let data = {
+        to: "ebonhavencom",
+        quantity: "1000000000.0000 EOS",
+        memo: "initial"
+      };
+      this.eos.action('issue', auth, data);
+    }
+
+    transferTokens() {
+      this.eos.setAccount("eosio.token");
+      let auth = [{
+        actor: 'ebonhavencom',
+        permission: 'active'
+      }];
+      let actions = [];
+      
+      let exclude = ["eosio.token", "ebonhavencom", "ebonhavenadm"];
+      config.accounts.forEach((a) => {
+        if ( exclude.indexOf(a.name) == -1 ) {
+          let action = {
+              name: "transfer",
+              authorization: auth,
+              data: {
+                from: "ebonhavencom",
+                to: a.name,
+                quantity: "100.0000 EOS",
+                memo: "initial"
+              }
+          };
+          actions.push(action);
+        }
+      });
+      this.eos.actions(actions);
     }
 
     createAdminAccount() {
-        let auth = [{
-            actor: 'ebonhavencom',
-            permission: 'active'
-        }];
-        this.eos.action('newaccount', auth, { user: "ebonhavencom" });
+      this.eos.setAccount("ebonhavencom");
+      let auth = [{
+          actor: 'ebonhavencom',
+          permission: 'active'
+      }];
+      this.eos.action('newaccount', auth, { user: "ebonhavencom" });
     }
 
     setupStats() {
-        console.log("Seeding basestats...");
-        let actions = [];
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding basestats...");
+      let actions = [];
 
-        stats.basestats.forEach((s) => {
-            let action = {
-                name: "upsstats",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: s.stats
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      stats.basestats.forEach((s) => {
+          let action = {
+              name: "upsstats",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: s.stats
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedEffects() {
-        console.log("Seeding effects...");
-        let actions = [];
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding effects...");
+      let actions = [];
 
-        effects.forEach((e) => {
-            let action = {
-                name: "upseffect",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: e
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      effects.forEach((e) => {
+          let action = {
+              name: "upseffect",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: e
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedAuras() {
-        console.log("Seeding auras...");
-        let actions = [];
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding auras...");
+      let actions = [];
 
-        auras.forEach((a) => {
-            let action = {
-                name: "upsaura",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: a
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      auras.forEach((a) => {
+          let action = {
+              name: "upsaura",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: a
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedAbilities() {
-        console.log("Seeding abilities...");
-        let actions = [];
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding abilities...");
+      let actions = [];
 
-        abilities.forEach((a) => {
-            let action = {
-                name: "upsability",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: a
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      abilities.forEach((a) => {
+          let action = {
+              name: "upsability",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: a
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     retireAllItems() {
-        console.log("Retiring items...");
-        items.forEach((i) => {
-            let auth = [{
-                actor: "ebonhavencom",
-                permission: "active"
-            }];
-            let data = {
-                category: i.category,
-                token_name: i.token_name
-            };
-            this.eos.action("retire", auth, data);
-        });
+      this.eos.setAccount("ebonhavencom");
+      console.log("Retiring items...");
+      items.forEach((i) => {
+          let auth = [{
+              actor: "ebonhavencom",
+              permission: "active"
+          }];
+          let data = {
+              category: i.category,
+              token_name: i.token_name
+          };
+          this.eos.action("retire", auth, data);
+      });
     }
 
     seedItems() {
-        console.log("Seeding items...");
-        let actions = [];
+      this.eos.setAccount("ebonhavencom");
+      console.log("Seeding items...");
+      let actions = [];
 
-        items.forEach((i) => {
-            let action = {
-                name: "create",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: i
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      items.forEach((i) => {
+          let action = {
+              name: "create",
+              authorization: [{
+                  actor: "ebonhavencom",
+                  permission: "active"
+              }],
+              data: i
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedCharacters() {
-        console.log("Seeding characters...");
-        let actions = [];
+      this.eos.setAccount("ebonhavencom");
+      console.log("Seeding characters...");
+      let actions = [];
 
-        config.accounts.forEach((a) => {
-            let action = {
-                name: "newcharacter",
-                authorization: [{
-                    actor: a.name,
-                    permission: "active"
-                }],
-                data: {}
-            };
-            if (a.name == "ebonhavencom") {
-                action.name = "newaccount";
-                action.data = {
-                    user: a.name
-                };
-            } else {
-                action.data = {
-                    user: a.name,
-                    character_name: a.name.charAt(0).toUpperCase() + a.name.slice(1),
-                    gender: a.character.gender,
-                    profession: a.character.profession,
-                    race: a.character.race
-                };
-            }
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      config.accounts.forEach((a) => {
+          let action = {
+              name: "newcharacter",
+              authorization: [{
+                  actor: a.name,
+                  permission: "active"
+              }],
+              data: {}
+          };
+          if (a.name == "ebonhavencom") {
+              action.name = "newaccount";
+              action.data = {
+                  user: a.name
+              };
+          } else {
+              action.data = {
+                  user: a.name,
+                  character_name: a.name.charAt(0).toUpperCase() + a.name.slice(1),
+                  gender: a.character.gender,
+                  profession: a.character.profession,
+                  race: a.character.race
+              };
+          }
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedDrops() {
-        console.log("Seeding drops...");
-        let actions = [];
-        drops.forEach((d) => {
-            let action = {
-                name: "upsdrop",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: d
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding drops...");
+      let actions = [];
+      drops.forEach((d) => {
+          let action = {
+              name: "upsdrop",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: d
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedMobs() {
-        console.log("Seeding mobs...");
-        let actions = [];
-        mobs.forEach((m) => {
-            let action = {
-                name: "upsmob",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: m
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding mobs...");
+      let actions = [];
+      mobs.forEach((m) => {
+          let action = {
+              name: "upsmob",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: m
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedResources() {
-        console.log("Seeding resources...");
-        let actions = [];
-        resources.forEach((r) => {
-            let action = {
-                name: "upsresource",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: r
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding resources...");
+      let actions = [];
+      resources.forEach((r) => {
+          let action = {
+              name: "upsresource",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: r
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedTreasures() {
-        console.log("Seeding treasures...");
-        let actions = [];
-        treasures.forEach((t) => {
-            let action = {
-                name: "upstreasure",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: t
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding treasures...");
+      let actions = [];
+      treasures.forEach((t) => {
+          let action = {
+              name: "upstreasure",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: t
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedMapdata() {
-        console.log("Seeding mapdata...");
-        let actions = [];
-        mapdata.forEach((m) => {
-            let action = {
-                name: "upsmapdata",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: m
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding mapdata...");
+      let actions = [];
+      mapdata.forEach((m) => {
+          let action = {
+              name: "upsmapdata",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: m
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedRecipes() {
-        console.log("Seeding recipes...");
-        let actions = [];
-        recipes.forEach((r) => {
-            let action = {
-                name: "upsrecipe",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: r
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding recipes...");
+      let actions = [];
+      recipes.forEach((r) => {
+          let action = {
+              name: "upsrecipe",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: r
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedQuests() {
-        console.log("Seeding quests...");
-        let actions = [];
-        quests.forEach((q) => {
-            let action = {
-                name: "upsquest",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: q
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding quests...");
+      let actions = [];
+      quests.forEach((q) => {
+          let action = {
+              name: "upsquest",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: q
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedNpcs() {
-        console.log("Seeding npcs...");
-        let actions = [];
-        npcs.forEach((n) => {
-            let action = {
-                name: "upsnpc",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: n
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding npcs...");
+      let actions = [];
+      npcs.forEach((n) => {
+          let action = {
+              name: "upsnpc",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: n
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 
     seedProgress() {
-        console.log("Seeding progress...");
-        let actions = [];
-        progress.forEach((p) => {
-            let action = {
-                name: "upsprogress",
-                authorization: [{
-                    actor: "ebonhavencom",
-                    permission: "active"
-                }],
-                data: p
-            };
-            actions.push(action);
-        });
-        this.eos.actions(actions);
+      this.eos.setAccount("ebonhavenadm");
+      console.log("Seeding progress...");
+      let actions = [];
+      progress.forEach((p) => {
+          let action = {
+              name: "upsprogress",
+              authorization: [{
+                  actor: "ebonhavenadm",
+                  permission: "active"
+              }],
+              data: p
+          };
+          actions.push(action);
+      });
+      this.eos.actions(actions);
     }
 };
 
@@ -363,6 +436,14 @@ switch(argv._[0]) {
     case "admin":
         seeder.createAdminAccount();
         break;
+    case "token:create":
+      seeder.createTokens();
+      break;
+    case "token:issue":
+      console.log("Seeding tokens...");
+      seeder.issueTokens();
+      seeder.transferTokens();
+      break;
     case "basestats":
         seeder.setupStats();
         break;

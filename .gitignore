@@ -6,3 +6,4 @@ data/
 nodeos.log
 keosd.log
 .DS_Store
+eosio.contracts/

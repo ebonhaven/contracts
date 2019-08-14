@@ -95,7 +95,7 @@ ACTION ebonhaven::combat( name user, uint64_t encounter_id, uint8_t combat_decis
   auto encounter = encounters.get(encounter_id, "encounter not found");
 
   characters_index characters(get_self(), user.value);
-  abilities_index abilities(get_self(), get_self().value);
+  abilities_index abilities(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   
   auto character = characters.get(encounter.character_id, "character doesn't exist");
   check(character.owner == user, "character doesn't belong to user");
@@ -280,7 +280,7 @@ ACTION ebonhaven::revive( name user, uint64_t character_id, uint64_t ressurect_i
     auto item = items.get(ressurect_item, "couldn't find item");
     auto item_stats = stats_table.get(item.token_name.value, "couldn't find item stats");
 
-    effects_index effects(get_self(), get_self().value);
+    effects_index effects(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
     auto i_effect = effects.get(item_stats.attributes.effects[0], "couldn't find key effect");
     check(i_effect.can_resurrect(), "item cannot ressurect");
 
@@ -323,7 +323,7 @@ uint64_t ebonhaven::calculate_player_attack_damage( name user,
   uint64_t aura_damage = 0;
   dgoods_index items(get_self(), get_self().value);
   
-  auras_index auras(get_self(), get_self().value);
+  auras_index auras(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
 
   ebonhaven::dgood item;
 
@@ -392,7 +392,7 @@ void ebonhaven::generate_encounter( name user, name payer, ebonhaven::character&
     check(enc.character_id != character.character_id, "encounter already exists for character");
   }
 
-  mobs_index mobs(get_self(), get_self().value);
+  mobs_index mobs(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   vector<mob> v_mobs = {};
   for (uint8_t i = 0; i < mob_ids.size(); i++) {
     auto mob = mobs.get(mob_ids[i], "can't find mob");
@@ -437,11 +437,12 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
 
     if (i_itr != selected_items.end()) {
       check(inventory_count(user) <= acct.max_inventory - 1, "not enough inventory space");
+      auto quantity = asset(1, symbol(symbol_code("EBON"), 0));
       action(
         permission_level{ get_self(), name("active") },
         name("ebonhavencom"),
         name("issue"),
-        make_tuple( user, name("ebonhavencom"), item, string("1"), string("1"), string(""), string("issued from ebonhavencom"))
+        make_tuple( user, name("ebonhavencom"), item, quantity, string("1"), string(""), string("issued from ebonhavencom"))
       ).send();
       selected_items.erase(i_itr);
     }
@@ -459,13 +460,13 @@ ACTION ebonhaven::claimrewards( name user, uint64_t reward_id, vector<name> sele
 
     if (character.level < MAX_LEVEL) {
 
-      progress_index progress(get_self(), get_self().value);
+      progress_index progress(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
       auto lvl = progress.get(character.level, "cannot find experience needed for next level");
       auto new_exp = character.experience += reward.experience; 
       if ( new_exp >= lvl.experience ) {
         character.level++;
 
-        basestats_index basestats(get_self(), get_self().value);
+        basestats_index basestats(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
         auto& base = basestats.get(character.profession, "profession stats not found");
         character.attack.spell += base.attack_increase.spell;
         character.attack.physical += base.attack_increase.physical;
@@ -498,7 +499,7 @@ void ebonhaven::generate_combat_reward( name user,
                                         uint32_t character_level,
                                         encounter s_encounter )
 {
-  drops_index drops(get_self(), get_self().value);
+  drops_index drops(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   rewards_index rewards(get_self(), user.value);
   reward r = {};
   asset total_reward = asset(0, symbol(symbol_code("EBON"),2));
@@ -564,7 +565,7 @@ bool ebonhaven::is_encounter_over(character c, encounter e) {
 name ebonhaven::roll_treasure( ebonhaven::character& character ) {
   name token_name;
   bool found = false;
-  treasures_index treasures(get_self(), get_self().value);
+  treasures_index treasures(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto t = treasures.get(character.position.world_zone_id, "couldn't find treasure");
 
   auto range = 100;

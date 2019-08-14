@@ -24,7 +24,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 100
+      "max_supply": "100 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -50,7 +50,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 100
+      "max_supply": "100 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -76,7 +76,7 @@
         "effects": [1001]
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -102,7 +102,7 @@
         "effects": [1002]
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -128,7 +128,7 @@
         "effects": [3001]
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 2000
+      "max_supply": "2000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -154,7 +154,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 100000
+      "max_supply": "100000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -180,7 +180,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -206,7 +206,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 100000
+      "max_supply": "100000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -232,7 +232,7 @@
         "effects": []
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -258,7 +258,7 @@
         "effects": [9002]
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     },
     {
       "rev_partner": "ebonhavendac",
@@ -284,7 +284,7 @@
         "effects": [9001]
       },
       "base_uri": "http://www.google.com",
-      "max_supply": 10000
+      "max_supply": "10000 EBON"
     }
   ]
 }

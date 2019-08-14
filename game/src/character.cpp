@@ -25,7 +25,7 @@ ACTION ebonhaven::newcharacter( name     user,
   
   auto acct = accounts.get(user.value);
   
-  basestats_index basestats(get_self(), get_self().value);
+  basestats_index basestats(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto& base = basestats.get(profession, "profession stats not found");
   
   characters_index characters(get_self(), user.value);
@@ -48,7 +48,7 @@ ACTION ebonhaven::newcharacter( name     user,
     c.stats = base.base_stats;
   });
 
-  mapdata_index mapdata(get_self(), get_self().value);
+  mapdata_index mapdata(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto map = mapdata.get(1, "could't find map");
   mapdata_index u_mapdata(get_self(), user.value);
   map.character_id = character_id;
@@ -188,7 +188,7 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
 
     characters_index characters(get_self(), user.value);
     accounts_index accounts(get_self(), user.value);
-    effects_index effects(get_self(), get_self().value);
+    effects_index effects(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
     
     dgoods_index items(get_self(), get_self().value);
 
@@ -219,7 +219,7 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
     // Learn recipe
     if (effect.effect_type == 4) {
       charhistory_index charhistory(get_self(), user.value);
-      recipes_index recipes(get_self(), get_self().value);
+      recipes_index recipes(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
       auto history = charhistory.get(character_id, "couldn't find history");
       auto recipe = recipes.get(effect.get_recipe_id(), "couldn't find recipe");
       if (recipe.profession_lock > 0) {
@@ -255,6 +255,9 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
   characters_index characters_table(get_self(), user.value);
   accounts_index accounts_table(get_self(), user.value);
   dgoods_index items(get_self(), get_self().value);
+  lock_index lock_table( get_self(), get_self().value );
+  auto locked_nft = lock_table.find( dgood_id );
+  check( locked_nft == lock_table.end(), "cannot equip listed items" );
 
   auto acct = accounts_table.get(user.value, "couldn't find account");
   auto c = characters_table.get(character_id, "couldn't find character");
@@ -412,7 +415,7 @@ ACTION ebonhaven::buyability( name user, uint64_t character_id, uint64_t ability
 
   characters_index characters(get_self(), user.value);
   accounts_index accounts(get_self(), user.value);
-  abilities_index abilities(get_self(), get_self().value);
+  abilities_index abilities(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   charhistory_index history(get_self(), user.value);
 
   auto c = characters.get(character_id, "couldn't find character");
@@ -450,7 +453,7 @@ ACTION ebonhaven::equipability( name user, uint64_t character_id, uint64_t abili
 
   characters_index characters(get_self(), user.value);
   accounts_index accounts(get_self(), user.value);
-  abilities_index abilities(get_self(), get_self().value);
+  abilities_index abilities(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   charhistory_index history(get_self(), user.value);
 
   auto c = characters.get(character_id, "couldn't find character");
@@ -519,7 +522,7 @@ ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
   auto chest_stat = stats_table.get(chest.token_name.value, "couldn't find chest stats");
   check(chest_stat.attributes.is_chest(), "incorrect item type: chest");
   
-  effects_index effects(get_self(), get_self().value);
+  effects_index effects(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
 
   auto key_effect = effects.get(key_stat.attributes.effects[0], "couldn't find key effect");
   json j = json::parse(key_effect.effect_data);
@@ -544,7 +547,7 @@ ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
     check(false, "no drop id found in chest effect");
   }
 
-  drops_index drops(get_self(), get_self().value);
+  drops_index drops(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto drop = drops.get(drop_id, "couldn't find drop");
 
   rewards_index rewards(get_self(), user.value);
@@ -585,7 +588,7 @@ ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
 }
 
 void ebonhaven::reset_stats( ebonhaven::character& c ) {
-  basestats_index basestats(get_self(), get_self().value);
+  basestats_index basestats(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   auto& base = basestats.get(c.profession, "Base stats for profession does not exist");
 
   c.attack.physical = base.base_attack.physical + (base.attack_increase.physical * c.level); 
@@ -620,7 +623,7 @@ void ebonhaven::add_item_stats( name user, ebonhaven::character& c ) {
 void ebonhaven::apply_item_auras( name user, ebonhaven::character& c, uint64_t item_id ) {
   dgoods_index items(get_self(), get_self().value);
   auto item = items.get( item_id, "couldn't find item" );
-  auras_index auras(get_self(), get_self().value);
+  auras_index auras(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   stats_index stats(get_self(), item.category.value);
   auto stat = stats.get(item.token_name.value, "couldn't find parent");
 

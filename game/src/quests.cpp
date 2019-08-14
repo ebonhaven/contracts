@@ -12,7 +12,7 @@ ACTION ebonhaven::acceptquest( name user,
     auto found = (find(history.completed_quests.begin(), history.completed_quests.end(), quest_name) != history.completed_quests.end());
     check(!found, "character completed this quest already");
 
-    quests_index quests(get_self(), get_self().value);
+    quests_index quests(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
     auto src_quest = quests.get(quest_name.value, "cannot find quest");
     auto character = characters.get(character_id, "cannot find character");
     check(character.hp > 0, "cannot accept quests while dead");
@@ -31,7 +31,7 @@ ACTION ebonhaven::acceptquest( name user,
     auto npcd = find_if(md->npcs.begin(), md->npcs.end(), [&npc_id](const struct npcdata& el){ return el.npc_id == npc_id; });
     check(npcd != md->npcs.end(), "npc not found in mapdata");
 
-    npcs_index npcs(get_self(), get_self().value);
+    npcs_index npcs(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
     auto npc = npcs.get(npcd->npc_id, "cannot find npc");                           
     auto quest_found = (find(npc.quests.begin(), npc.quests.end(), src_quest.quest_name) != npc.quests.end());
     check(quest_found != false, "npc does not offer that quest");
