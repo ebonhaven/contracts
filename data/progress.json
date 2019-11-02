@@ -1,0 +1,84 @@
+{
+    "progress": [
+        {
+            "level": 1,
+            "experience": 400
+        },
+        {
+            "level": 2,
+            "experience": 900
+        },
+        {
+            "level": 3,
+            "experience": 1400
+        },
+        {
+            "level": 4,
+            "experience": 2100
+        },
+        {
+            "level": 5,
+            "experience": 2800
+        },
+        {
+            "level": 6,
+            "experience": 3800
+        },
+        {
+            "level": 7,
+            "experience": 5000
+        },
+        {
+            "level": 8,
+            "experience": 6400
+        },
+        {
+            "level": 9,
+            "experience": 8100
+        },
+        {
+            "level": 10,
+            "experience": 9240
+        },
+        {
+            "level": 11,
+            "experience": 10780
+        },
+        {
+            "level": 12,
+            "experience": 13230
+        },
+        {
+            "level": 13,
+            "experience": 16800
+        },
+        {
+            "level": 14,
+            "experience": 20380
+        },
+        {
+            "level": 15,
+            "experience": 24440
+        },
+        {
+            "level": 16,
+            "experience": 28080
+        },
+        {
+            "level": 17,
+            "experience": 31500
+        },
+        {
+            "level": 18,
+            "experience": 34400
+        },
+        {
+            "level": 19,
+            "experience": 36550
+        },
+        {
+            "level": 20,
+            "experience": 42320
+        }
+    ]
+}

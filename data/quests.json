@@ -1,0 +1,27 @@
+{
+    "quests": [
+        {
+            "user": "ebonhavencom",
+            "character_id": 0,
+            "quest_name": "quest1",
+            "begin_npc_id": 1001,
+            "min_level": 1,
+            "complete_npc_id": 1002,
+            "worth": "1.00 EBON",
+            "experience": 10,
+            "rewards": ["weapon1"],
+            "repeatable": 0,
+            "prerequisites": [],
+            "profession_lock": 0,
+            "race_lock": 0,
+            "objectives": [
+                {
+                    "objective_id": 1,
+                    "objective_type": 0,
+                    "completed": 0,
+                    "objective_data": "{\"mob_id\":101,\"count\":1}"
+                }
+            ]
+        }
+    ]
+}

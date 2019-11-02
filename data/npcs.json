@@ -1,0 +1,14 @@
+{
+    "npcs": [
+        {
+            "npc_id": 1001,
+            "quests": ["quest1"],
+            "triggers": []
+        },
+        {
+            "npc_id": 1002,
+            "quests": [],
+            "triggers": []
+        }
+    ]
+}

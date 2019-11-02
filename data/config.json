@@ -1,0 +1,71 @@
+{
+    "endpoint": "http://127.0.0.1:8888",
+    "privateKeys": [
+        "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3",
+        "5KSVe3AYVmkVJ6qzksWRfw8E3HJACg4h87Wu9uHrzeN5LRPDQNr",
+        "5Hvik3xTfFhudTkm18wdYNKWdwP2ybGrL5Ev4W18KZ7ae8Kbosb",
+        "5KcoGSR29H3mw1MCcvNMXKTWxe2K3yxi6Mzhv1RkMfyvHb2Rzfj",
+        "5KhF42H4NnDd6uyfcHe8yYsPdZpoSg1FbU3fyZ6mnVXiVmwPJrE",
+        "5KYSAq469G6en8d4kNBYHaNuENxreGrYbSxcntCwBAfcKxMv9Dg"
+    ],
+    "contracts": [
+        {
+            "name": "ebonhavencom",
+            "location": ""
+        }
+    ],
+    "accounts": [
+        {
+          "name": "eosio.token",
+          "permissions": {
+            "owner": "EOS5ChusZxwRuAvrQLB9icfymq6yEnCTgKJYKwcKWAxpCQFN74ujW",
+            "active": "EOS5ChusZxwRuAvrQLB9icfymq6yEnCTgKJYKwcKWAxpCQFN74ujW"
+          }
+        },
+        {
+          "name": "ebonhavencom",
+          "permissions": {
+            "owner": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+            "active": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+          }
+        },
+        {
+          "name": "ebonhavenadm",
+          "permissions": {
+            "owner": "EOS5nxt6ja8X1hF7vkatot8cBKwXmrPWhP6fLXQJ2huoZAZtRUT6k",
+            "active": "EOS5nxt6ja8X1hF7vkatot8cBKwXmrPWhP6fLXQJ2huoZAZtRUT6k"
+          }
+        },
+        {
+          "name": "ebonhavendac",
+          "permissions": {
+            "owner": "EOS7Zu5a1aQiaU8EGvWAmsDsBFEPAd5gADJ4TCns9zfTF2UQdrbUw",
+            "active": "EOS7Zu5a1aQiaU8EGvWAmsDsBFEPAd5gADJ4TCns9zfTF2UQdrbUw"
+          }
+        },
+        {
+          "name": "alice",
+          "permissions": {
+            "owner": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7",
+            "active": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7"
+          },
+          "character": {
+            "gender": 1,
+            "profession": 1,
+            "race": 1
+          }
+        },
+        {
+          "name": "bob",
+          "permissions": {
+            "owner": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7",
+            "active": "EOS7tfc96jQuSdMGj2A2H1qkjmwdEDMK53qMyTXCJZGJMeVgmwAg7"
+          },
+          "character": {
+            "gender": 0,
+            "profession": 2,
+            "race": 2
+          }
+        }
+    ]
+}
