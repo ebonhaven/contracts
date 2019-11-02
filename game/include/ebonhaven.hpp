@@ -153,22 +153,28 @@ CONTRACT ebonhaven : public contract {
     };
     
     TABLE mob {
-      uint32_t mob_id;
-      string   mob_name;
-      int32_t  level = 1;
-      uint8_t  mob_type = 0;
-      uint8_t  last_decision = 0;
-      uint8_t  last_decision_hit = 1;
-      attack   attack;
-      defense  defense;
-      string   mob_data;
-      uint32_t hp = 0;
-      uint32_t max_hp = 0;
-      uint32_t experience = 0;
-      asset    worth = asset(0, symbol(symbol_code("EBON"),2));
-      uint64_t drop_id;
+      uint32_t   mob_id;
+      string     mob_name;
+      int32_t    level = 1;
+      uint8_t    mob_type = 0;
+      uint8_t    last_decision = 0;
+      uint8_t    last_decision_hit = 1;
+      attack     attack;
+      defense    defense;
+      string     mob_data;
+      uint32_t   hp = 0;
+      uint32_t   max_hp = 0;
+      uint32_t   experience = 0;
+      asset      worth = asset(0, symbol(symbol_code("EBON"),2));
+      uint64_t   drop_id;
+      uint8_t    bribed = 0;
+      bribe_drop bribe;
 
       uint64_t primary_key() const { return mob_id; }
+
+      const bool can_bribe() const {
+        return (bribe.drop_id > 0 ? true : false);
+      }
     };
     
     TABLE encounter {
@@ -218,6 +224,7 @@ CONTRACT ebonhaven : public contract {
       uint8_t  profession_id;
       uint32_t experience = 0;
       uint32_t min_skill;
+      uint32_t max_skill;
       vector<resource_drop> drops;
       
       auto primary_key() const { return resource_name.value; }
@@ -294,7 +301,8 @@ CONTRACT ebonhaven : public contract {
 
     // Scope is user
     TABLE mapdata {
-      uint64_t          world_zone_id; // primary
+      uint64_t          mapdata_id;
+      uint64_t          world_zone_id;
       uint64_t          character_id = 0;
       position          respawn;
       vector<tiledata>  tiles;
@@ -304,7 +312,7 @@ CONTRACT ebonhaven : public contract {
       vector<zone_drop> resources;
       rate_mod          rate_modifier;
       
-      uint64_t primary_key() const { return world_zone_id; }
+      uint64_t primary_key() const { return mapdata_id; }
       uint64_t by_character_id() const { return character_id; }
     };
 
@@ -314,6 +322,7 @@ CONTRACT ebonhaven : public contract {
       name                token_name;
       uint8_t             profession_lock;
       uint32_t            min_skill;
+      uint32_t            max_skill;
       vector<requirement> requirements;
 
       uint64_t primary_key() const { return recipe_id; }
@@ -352,6 +361,19 @@ CONTRACT ebonhaven : public contract {
       uint64_t experience;
 
       uint8_t primary_key() const { return level; }
+    };
+
+    TABLE contact {
+      name   contact;
+      vector<permission>  permissions;
+
+      const bool can_transfer() const {
+        auto found = find_if(permissions.begin(), permissions.end(),
+          [](const struct permission& el){ return el.type == 0 && el.permitted == true; });
+        return (found != permissions.end() ? true : false);
+      }
+
+      uint64_t primary_key() const { return contact.value; }
     };
     
     // TABLES
@@ -409,6 +431,8 @@ CONTRACT ebonhaven : public contract {
 
     using progress_index = multi_index< "progress"_n, progress>;
 
+    using contacts_index = multi_index< "contacts"_n, contact>;
+
     // dGoods
     map<name, asset> _calcfees(vector<uint64_t> dgood_ids, asset ask_amount, name seller);
     void _changeowner( name from, name to, vector<uint64_t> dgood_ids, string memo, bool istransfer);
@@ -427,8 +451,7 @@ CONTRACT ebonhaven : public contract {
     void sub_token_balance( name owner, asset value );
     uint64_t calculate_player_attack_damage( name user,
                                              ebonhaven::character& c,
-                                             ebonhaven::mob& m,
-                                             bool is_ranged);
+                                             ebonhaven::mob& m );
     void generate_encounter( name user, name payer, ebonhaven::character& character, vector<uint64_t> mob_ids);
     void generate_combat_reward( name user,
                                  name payer,
@@ -467,8 +490,9 @@ CONTRACT ebonhaven : public contract {
     
     int inventory_count(name user) {
       dgoods_index dgood_table(get_self(), get_self().value);
+      auto owner_index = dgood_table.get_index<name("byowner")>();
       vector<dgood> items;
-      copy_if(dgood_table.begin(), dgood_table.end(), back_inserter(items), [&user](const struct dgood& el) {
+      copy_if(owner_index.lower_bound(user.value), owner_index.upper_bound(user.value), back_inserter(items), [&user](const struct dgood& el) {
         return el.owner == user && el.equipped == false;
       });
       return items.size();
@@ -487,10 +511,10 @@ CONTRACT ebonhaven : public contract {
     }
 
     bool is_coordinate_walkable(vector<tiledata> tiles, uint64_t x, uint64_t y) {
-      auto tile = find_if(tiles.begin(), tiles.end(), [&x, &y](const struct tiledata& el){ return el.coordinates.x == x && el.coordinates.y == y; });
+      auto tile = find_if(tiles.begin(), tiles.end(), [&x, &y](const struct tiledata& el){ return el.c.x == x && el.c.y == y; });
       check(tile != tiles.end(), "tile not found");
       if (tile != tiles.end()) {
-        nlohmann::json attr = nlohmann::json::parse(tile->attributes);
+        nlohmann::json attr = nlohmann::json::parse(tile->a);
         return attr["walkable"].get<bool>();
       }
       return false;
@@ -508,11 +532,16 @@ CONTRACT ebonhaven : public contract {
     ebonhaven(eosio::name receiver, eosio::name code, datastream<const char*> ds):contract(receiver, code, ds) {}
     
     const name ADMIN_CONTRACT = name("ebonhavenadm");
+    const name DAC_CONTRACT = name("ebonhavendac");
     const int WEEK_SEC = 3600*24*7;
     const int THREE_DAY_SEC = 3600*24*3;
     const int ONE_DAY_SEC = 3600*24;
     
     ACTION newaccount( name user );
+
+    ACTION newcontact( name user, name contact );
+
+    ACTION delcontact( name user, name contact );
 
     ACTION newcharacter( name     user,
                          string   character_name,
@@ -556,7 +585,9 @@ CONTRACT ebonhaven : public contract {
     ACTION burnnft( name owner,
                     vector<uint64_t> dgood_ids );
     
-    void buynft( name from, name to, asset quantity, string memo );
+    void buynft( name from, name to_account, uint64_t batch_id, asset quantity );
+
+    void buyslot( name from, asset quantity );
 
     ACTION listsalenft( name seller,
                         vector<uint64_t> dgood_ids,
@@ -624,6 +655,8 @@ CONTRACT ebonhaven : public contract {
 
     // Admin                     
     ACTION setconfig(string version);
+
+    void transfer( uint64_t sender, uint64_t receiver );
     
     // Admin
     ACTION tokenreward( name to, asset quantity );

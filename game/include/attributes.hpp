@@ -35,11 +35,10 @@ namespace item_attributes {
     LEGS = 9,
     FEET = 10,
     WEAPON = 11,
-    RANGED = 12,
-    RING1 = 13,
-    RING2 = 14,
-    TRINKET1 = 15,
-    TRINKET2 = 16
+    RING1 = 12,
+    RING2 = 13,
+    TRINKET1 = 14,
+    TRINKET2 = 15
   };
 
   enum class item_quality: uint8_t {

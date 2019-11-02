@@ -8,6 +8,7 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
   charhistory_index charhistory(get_self(), user.value);
   recipes_index recipes(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
   dgoods_index dgoods(get_self(), get_self().value);
+  lock_index lock_table( get_self(), get_self().value );
   auto character = characters.get(character_id, "couldn't find character");
   check(character.hp > 0, "cannot craft while dead");
   check(character.status == 0, "character status does not allow crafting");
@@ -18,13 +19,20 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
 
   vector<uint64_t> to_burn;
 
-  // FIXME: This is no bueno
   for (auto& r: recipe.requirements) {
     vector<dgood> matching_items;
-    copy_if(dgoods.begin(), dgoods.end(), back_inserter(matching_items), [&user, &r](const struct dgood& el) {
-      return el.owner == user && el.token_name == r.token_name && el.equipped == false;
+    auto owner_index = dgoods.get_index<name("byowner")>();
+    copy_if(owner_index.lower_bound(user.value), owner_index.upper_bound(user.value), back_inserter(matching_items), [&user, &r, &lock_table](const struct dgood& el) {
+      bool is_valid = false;
+      if (el.owner == user && el.token_name == r.token_name && el.equipped == false) {
+        auto locked_nft = lock_table.find( el.id );
+        if( locked_nft == lock_table.end() ) {
+          is_valid = true;
+        }
+      }
+      return is_valid;
     });
-    check(matching_items.size() >= r.quantity, "insufficient quantity of items in inventory");
+    check(matching_items.size() >= r.quantity, "insufficient quantity of available items in inventory");
     for (int i = 0; i < r.quantity; i++) {
       to_burn.push_back(matching_items[i].id);
     }
@@ -44,6 +52,14 @@ ACTION ebonhaven::craft( name user, uint64_t character_id, uint64_t recipe_id )
     name("issue"),
     make_tuple( user, name("ebonhavencom"), recipe.token_name, quantity, string("1"), user.to_string(), string("issued by ebonhavencom"))
   ).send();
+
+  if (history.profession_skill.craft <= recipe.max_skill) {
+    auto h_itr = charhistory.find(character_id);
+    charhistory.modify(h_itr, user, [&](auto& h) {
+      h.profession_skill.craft++;
+    });
+  }
+  
 }
 
 ACTION ebonhaven::gather( name user, uint64_t character_id )
@@ -88,7 +104,12 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
     }
   }
 
-  generate_resource_reward( user, user, character_id, resource.experience, reward_items );
+  uint32_t exp = resource.experience;
+  if (history.profession_skill.gather > resource.max_skill) {
+    exp = 0;
+  }
+
+  generate_resource_reward( user, user, character_id, exp, reward_items );
 
   if (character.status == 2) {
     auto c_itr = characters.find(character_id);
@@ -96,10 +117,12 @@ ACTION ebonhaven::gather( name user, uint64_t character_id )
       c.status = 0;
     });
 
-    auto h_itr = charhistory.find(character_id);
-    charhistory.modify(h_itr, user, [&](auto& h) {
-      h.profession_skill.gather++;
-    });
+    if (history.profession_skill.gather <= resource.max_skill) {
+      auto h_itr = charhistory.find(character_id);
+      charhistory.modify(h_itr, user, [&](auto& h) {
+        h.profession_skill.gather++;
+      });
+    }
   }
 }
 
@@ -108,7 +131,6 @@ void ebonhaven::generate_resource_reward( name user, name payer, uint64_t charac
 
   reward rew = {};
   rew.reward_id = rewards.available_primary_key();
-  if (rew.reward_id == 0) { rew.reward_id++; }
   rew.character_id = character_id;
   rew.experience = experience;
   rew.items = resource_items;

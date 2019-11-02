@@ -18,12 +18,12 @@ CONTRACT admin : public contract {
     ACTION upsability( uint64_t ability_id, string ability_name, string ability_description, asset ability_cost, uint32_t level, uint8_t profession_lock, uint8_t race_lock, string ability_data );
     ACTION upsdrop( uint64_t drop_id, asset min_worth, asset max_worth, vector<item_drop> item_drops);
     ACTION upseffect(uint64_t effect_id, uint8_t effect_type, float_t chance, uint8_t cooldown, string& effect_data );
-    ACTION upsmapdata( uint64_t world_zone_id, position respawn, vector<tiledata> tiles, vector<trigger> triggers, vector<mobdata> mobs, vector<npcdata> npcs, vector<zone_drop> resources, rate_mod rate_modifier );
-    ACTION upsmob( uint32_t mob_id, string mob_name, uint8_t level, uint8_t mob_type, attack attack, defense defense, string mob_data, uint32_t hp, uint32_t experience, asset worth, uint64_t drop_id );
+    ACTION upsmapdata( uint64_t mapdata_id, uint64_t world_zone_id, position respawn, vector<tiledata> tiles, vector<trigger> triggers, vector<mobdata> mobs, vector<npcdata> npcs, vector<zone_drop> resources, rate_mod rate_modifier );
+    ACTION upsmob( uint32_t mob_id, string mob_name, uint8_t level, uint8_t mob_type, attack attack, defense defense, string mob_data, uint32_t hp, uint32_t experience, asset worth, uint64_t drop_id, bribe_drop bribe );
     ACTION upsnpc( uint64_t npc_id, vector<name> quests, vector<uint64_t> triggers );
     ACTION upsprogress( uint8_t level, uint64_t experience );
-    ACTION upsrecipe( uint64_t recipe_id, name category, name token_name, uint8_t profession_lock, uint32_t min_skill, vector<requirement> requirements );
-    ACTION upsresource( name resource_name, uint8_t profession_id, uint32_t experience, uint32_t min_skill, vector<resource_drop> drops );
+    ACTION upsrecipe( uint64_t recipe_id, name category, name token_name, uint8_t profession_lock, uint32_t min_skill, uint32_t max_skill, vector<requirement> requirements );
+    ACTION upsresource( name resource_name, uint8_t profession_id, uint32_t experience, uint32_t min_skill, uint32_t max_skill, vector<resource_drop> drops );
     ACTION upsstats( uint8_t profession, uint8_t base_hp, uint8_t hp_increase, attack  base_attack, defense base_defense, attack attack_increase, defense defense_increase, stats base_stats, stats stats_increase );
     ACTION upstreasure( uint64_t world_zone_id, vector<item_drop> drops );
     ACTION upsquest( name user, uint64_t character_id, name quest_name, uint64_t begin_npc_id, uint8_t min_level, uint64_t complete_npc_id, asset worth, uint32_t experience, vector<name> rewards, uint8_t repeatable, vector<uint64_t> prerequisites, uint8_t profession_lock, uint8_t race_lock, vector<objective> objectives );
@@ -108,6 +108,7 @@ CONTRACT admin : public contract {
     };
 
     TABLE mapdata {
+      uint64_t          mapdata_id;
       uint64_t          world_zone_id; // primary
       uint64_t          character_id = 0;
       position          respawn;
@@ -118,27 +119,33 @@ CONTRACT admin : public contract {
       vector<zone_drop> resources;
       rate_mod          rate_modifier;
       
-      uint64_t primary_key() const { return world_zone_id; }
+      uint64_t primary_key() const { return mapdata_id; }
       uint64_t by_character_id() const { return character_id; }
     };
 
     TABLE mob {
-      uint32_t mob_id;
-      string   mob_name;
-      int32_t  level = 1;
-      uint8_t  mob_type = 0;
-      uint8_t  last_decision = 0;
-      uint8_t  last_decision_hit = 1;
-      attack   attack;
-      defense  defense;
-      string   mob_data;
-      uint32_t hp = 0;
-      uint32_t max_hp = 0;
-      uint32_t experience = 0;
-      asset    worth = asset(0, symbol(symbol_code("EBON"),2));
-      uint64_t drop_id;
+      uint32_t   mob_id;
+      string     mob_name;
+      int32_t    level = 1;
+      uint8_t    mob_type = 0;
+      uint8_t    last_decision = 0;
+      uint8_t    last_decision_hit = 1;
+      attack     attack;
+      defense    defense;
+      string     mob_data;
+      uint32_t   hp = 0;
+      uint32_t   max_hp = 0;
+      uint32_t   experience = 0;
+      asset      worth = asset(0, symbol(symbol_code("EBON"),2));
+      uint64_t   drop_id;
+      uint8_t    bribed = 0;
+      bribe_drop bribe;
 
       uint64_t primary_key() const { return mob_id; }
+
+      const bool can_bribe() const {
+        return (bribe.drop_id > 0 ? true : false);
+      }
     };
 
     TABLE npc {
@@ -182,6 +189,7 @@ CONTRACT admin : public contract {
       name                token_name;
       uint8_t             profession_lock;
       uint32_t            min_skill;
+      uint32_t            max_skill;
       vector<requirement> requirements;
 
       uint64_t primary_key() const { return recipe_id; }
@@ -192,6 +200,7 @@ CONTRACT admin : public contract {
       uint8_t  profession_id;
       uint32_t experience = 0;
       uint32_t min_skill;
+      uint32_t max_skill;
       vector<resource_drop> drops;
       
       auto primary_key() const { return resource_name.value; }

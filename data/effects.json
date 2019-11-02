@@ -34,6 +34,13 @@
             "chance": 1,
             "cooldown": 1,
             "effect_data": "{\"drop\":3001}"
-        }
+        },
+      {
+        "effect_id": 9901,
+        "effect_type": 8,
+        "chance": 1,
+        "cooldown": 1,
+        "effect_data": "{\"expand_inventory\":24, \"max_inventory\":16}"
+      }
     ]
 }

@@ -6,6 +6,7 @@
       "token_name": "weapon1",
       "profession_lock": 0,
       "min_skill": 1,
+      "max_skill": 10,
       "requirements": [
         {
           "token_name": "resource1",

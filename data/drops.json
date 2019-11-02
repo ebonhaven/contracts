@@ -25,6 +25,17 @@
           "token_name": "recipe1"
         }
       ]
+    },
+    {
+      "drop_id": 4001,
+      "min_worth": "0.00 EBON",
+      "max_worth": "0.00 EBON",
+      "item_drops": [
+        {
+          "percentage": 100.0,
+          "token_name": "weapon2"
+        }
+      ]
     }
   ]
 }

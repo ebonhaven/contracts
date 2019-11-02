@@ -80,7 +80,7 @@ class EOS {
         return result;
     }
 
-    async action(actionName, authorization, data, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 30) {
+    async action(actionName, authorization, data, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 60) {
         let response = await this.api.transact({
             actions: [{
                 account: this.account,
@@ -99,7 +99,7 @@ class EOS {
         return response;
     };
 
-    async actions(actions, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 30) {
+    async actions(actions, broadcast = true, sign = true, blocksBehind = 3, expireSeconds = 60) {
         let accountActions = [];
         actions.forEach((a) => {
             a.account = this.account;

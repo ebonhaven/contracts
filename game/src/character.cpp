@@ -31,8 +31,9 @@ ACTION ebonhaven::newcharacter( name     user,
   characters_index characters(get_self(), user.value);
   check(distance(characters.begin(), characters.end()) + 1 <= acct.max_characters, "no available characters");
   
+  position default_position = position{1, 0, 15, 0};
+
   auto character_id = characters.available_primary_key();
-  if (character_id == 0) { character_id++; }
   characters.emplace( user, [&](auto& c) {
     c.character_id = character_id;
     c.owner = user;
@@ -45,12 +46,15 @@ ACTION ebonhaven::newcharacter( name     user,
     c.max_hp = base.base_hp;
     c.attack = base.base_attack;
     c.defense = base.base_defense;
+    c.position = default_position;
     c.stats = base.base_stats;
   });
 
   mapdata_index mapdata(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
-  auto map = mapdata.get(1, "could't find map");
+  // Find starting map for character
+  auto map = mapdata.get(0, "could't find map");
   mapdata_index u_mapdata(get_self(), user.value);
+  map.mapdata_id = u_mapdata.available_primary_key();
   map.character_id = character_id;
   u_mapdata.emplace( user, [&](auto &m) {
     m = map;
@@ -107,9 +111,6 @@ ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
   if (character.equipped.weapon != 0) {
       to_delete.push_back(character.equipped.weapon);
   }
-  if (character.equipped.ranged != 0) {
-      to_delete.push_back(character.equipped.ranged);
-  }
   if (character.equipped.ring1 != 0) {
       to_delete.push_back(character.equipped.ring1);
   }
@@ -164,7 +165,7 @@ ACTION ebonhaven::delcharacter( name user, uint64_t character_id ) {
   vector<uint64_t> mapdata_to_delete;
   for (auto& m: mapdata) {
     if (m.character_id == character_id) {
-      mapdata_to_delete.push_back(m.world_zone_id);
+      mapdata_to_delete.push_back(m.mapdata_id);
     }
   }
 
@@ -199,25 +200,27 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
     
     stats_index stats_table(get_self(), item.category.value);
     auto stat = stats_table.get(item.token_name.value, "couldn't find parent");
+    check(stat.attributes.level_requirement <= c.level, "character level requirement not met");
     check(stat.attributes.is_key() != true, "not allowed. use unlock action");
     check(stat.attributes.is_chest() != true, "not allowed. use unlock action");
     check(stat.attributes.is_consumable() || stat.attributes.effects.size() > 0, "item cannot be used");
+    
+    lock_index lock_table( get_self(), get_self().value );
+    auto locked_nft = lock_table.find( dgood_id );
+    check( locked_nft == lock_table.end(), "token locked, cannot use item");
 
     auto effect = effects.get(stat.attributes.effects[effect_idx], "couldn't find effect");
     check(!effect.can_resurrect(), "cannot use items that ressurect. must use revive action");
     check(c.hp > 0, "cannot use items while dead");
     
-    // Apply effect to character
-    if (effect.effect_type == 0) {
+    if( effect.effect_type == 0) {
       apply_effect_to_character( effect, c );
       auto itr = characters.find(character_id);
       characters.modify( itr, user, [&](auto& mod) {
           mod = c;
       });
-    }
-
-    // Learn recipe
-    if (effect.effect_type == 4) {
+      // LEARNRECIPE
+    } else if (effect.effect_type == 4 ) {
       charhistory_index charhistory(get_self(), user.value);
       recipes_index recipes(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
       auto history = charhistory.get(character_id, "couldn't find history");
@@ -233,6 +236,17 @@ ACTION ebonhaven::useitem( name user, uint64_t character_id, uint64_t dgood_id, 
       if ( h_itr != charhistory.end() ) {
         charhistory.modify( h_itr, user, [&](auto& h) {
           h.learned_recipes = history.learned_recipes;
+        });
+      }
+      // EXPANDINVENTORY
+    } else if (effect.effect_type == 8) {
+      json j = json::parse(effect.effect_data);
+      check(j.count("expand_inventory") > 0 && j.count("max_inventory") > 0, "effect not valid");
+      check(j["max_inventory"] == acct.max_inventory, "account inventory size invalid");
+      auto a_itr = accounts.find(user.value);
+      if (a_itr != accounts.end()) {
+        accounts.modify( a_itr, user, [&](auto& a) {
+          a.max_inventory = j["expand_inventory"].get<uint8_t>();
         });
       }
     }
@@ -261,20 +275,18 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
 
   auto acct = accounts_table.get(user.value, "couldn't find account");
   auto c = characters_table.get(character_id, "couldn't find character");
-  check(user == c.owner, "character does not belong to user");
   check(c.status != 4, "character cannot equip items in combat");
   check(c.hp > 0, "cannot equip items while dead");
   auto item = items.get(dgood_id, "couldn't find item");
   
   reset_stats( c );
 
+  // Unequip
   if (equip_slot == 0) {
     // Check if inventory space available
     check(inventory_count(user) < acct.max_inventory, "not enough inventory space");
 
-    // Mark item as unequipped
     item.equipped = false;
-    
 
     if (c.equipped.head == item.id) { c.equipped.head = 0; }
     else if (c.equipped.neck == item.id) { c.equipped.neck = 0; }
@@ -287,7 +299,6 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
     else if (c.equipped.legs == item.id) { c.equipped.legs = 0; }
     else if (c.equipped.feet == item.id) { c.equipped.feet = 0; }
     else if (c.equipped.weapon == item.id) { c.equipped.weapon = 0; }
-    else if (c.equipped.ranged == item.id) { c.equipped.ranged = 0; }
     else if (c.equipped.ring1 == item.id) { c.equipped.ring1 = 0; }
     else if (c.equipped.ring2 == item.id) { c.equipped.ring2 = 0; }
     else if (c.equipped.trinket1 == item.id) { c.equipped.trinket1 = 0; }
@@ -350,10 +361,6 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
         c.equipped.weapon = item.id;
         break;
       case 12:
-        if (c.equipped.ranged != 0 ) { old_item = items.get(c.equipped.ranged); }
-        c.equipped.ranged = item.id;
-        break;
-      case 13:
         if (c.equipped.ring1 != 0 ) { old_item = items.get(c.equipped.ring1); }
         c.equipped.ring1 = item.id;
         break;
@@ -377,6 +384,7 @@ ACTION ebonhaven::equipitem( name user, uint64_t character_id, uint64_t dgood_id
     item.equipped = true;
     
     // Store old item as unequipped
+    check(old_item.id != item.id, "cannot equip same item");
     auto oi_itr = items.find(old_item.id);
     if (oi_itr != items.end()) {
       items.modify( oi_itr, get_self(), [&](auto& oi) {
@@ -514,13 +522,18 @@ ACTION ebonhaven::unlock( name user, uint64_t key_id, uint64_t chest_id )
   require_auth( user );
   dgoods_index items(get_self(), get_self().value);
   stats_index stats_table(get_self(), get_self().value);
+  lock_index lock_table( get_self(), get_self().value );
   auto key = items.get(key_id, "couldn't find key");
   auto key_stat = stats_table.get(key.token_name.value, "couldn't find key stats");
   check(key_stat.attributes.is_key(), "incorrect item type: key");
   check(key_stat.attributes.effects.size() > 0, "no key effect found");
+  auto locked_nft_key = lock_table.find( key.id );
+  check( locked_nft_key == lock_table.end(), "token locked, cannot unlock using this item");
   auto chest = items.get(chest_id, "couldn't find chest");
   auto chest_stat = stats_table.get(chest.token_name.value, "couldn't find chest stats");
   check(chest_stat.attributes.is_chest(), "incorrect item type: chest");
+  auto locked_nft_chest = lock_table.find( chest.id );
+  check( locked_nft_chest == lock_table.end(), "token locked, cannot unlock using this item");
   
   effects_index effects(ADMIN_CONTRACT, ADMIN_CONTRACT.value);
 
@@ -613,7 +626,6 @@ void ebonhaven::add_item_stats( name user, ebonhaven::character& c ) {
   if (c.equipped.legs > 0) { apply_item_auras( user, c, c.equipped.legs ); }
   if (c.equipped.feet > 0) { apply_item_auras( user, c, c.equipped.feet ); }
   if (c.equipped.weapon > 0) { apply_item_auras( user, c, c.equipped.weapon ); }
-  if (c.equipped.ranged > 0) { apply_item_auras( user, c, c.equipped.ranged ); }
   if (c.equipped.ring1 > 0) { apply_item_auras( user, c, c.equipped.ring1 ); }
   if (c.equipped.ring2 > 0) { apply_item_auras( user, c, c.equipped.ring2 ); }
   if (c.equipped.trinket1 > 0) { apply_item_auras( user, c, c.equipped.trinket1 ); }

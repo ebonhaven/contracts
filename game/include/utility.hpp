@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace eosio;
+using namespace types;
 
 namespace utility {
 
@@ -30,6 +31,21 @@ namespace utility {
         ltrim(s);
         rtrim(s);
         return s;
+    }
+
+    transfer_action parsetransfer(raw_transfer transfer_data)
+    {
+      transfer_action ta;
+      auto &memo = transfer_data.memo;
+      size_t n1 = memo.find(':');
+      size_t n2 = memo.find(':', n1 + 1);
+      size_t n3 = memo.find(':', n2 + 1);
+      ta.from = name(transfer_data.from);
+      ta.action = memo.substr(0, n1);
+      ta.id = atoi(memo.substr(n1 + 1, n2 - (n1 + 1)).c_str());
+      ta.recipient = name(memo.substr(n2 + 1));
+      ta.quantity = transfer_data.quantity;
+      return ta;
     }
 
     tuple<uint64_t, name> parsememo(const string& memo) {

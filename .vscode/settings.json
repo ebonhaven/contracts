@@ -45,6 +45,7 @@
       "__locale": "cpp",
       "ios": "cpp",
       "deque": "cpp",
-      "__memory": "cpp"
+      "__memory": "cpp",
+      "complex": "cpp"
     }
 }

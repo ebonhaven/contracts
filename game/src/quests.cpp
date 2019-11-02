@@ -37,8 +37,8 @@ ACTION ebonhaven::acceptquest( name user,
     check(quest_found != false, "npc does not offer that quest");
 
     auto character_pos = make_pair(character.position.x, character.position.y);
-    auto npc_pos = make_pair(npcd->coordinates.x, npcd->coordinates.y);
-    if (!is_position_within_target_radius(character_pos, npc_pos, npcd->radius)) {
+    auto npc_pos = make_pair(npcd->c.x, npcd->c.y);
+    if (!is_position_within_target_radius(character_pos, npc_pos, npcd->r)) {
         check(false, "character not within npc radius");
     }
 
@@ -89,8 +89,8 @@ ACTION ebonhaven::endquest( name user, uint64_t character_id, uint64_t npc_id, u
         check(completed_objectives.size() == quest.objectives.size(), "all objectives not completed");
 
         auto character_pos = make_pair(character.position.x, character.position.y);
-        auto npc_pos = make_pair(npcd->coordinates.x, npcd->coordinates.y);
-        if (!is_position_within_target_radius(character_pos, npc_pos, npcd->radius)) {
+        auto npc_pos = make_pair(npcd->c.x, npcd->c.y);
+        if (!is_position_within_target_radius(character_pos, npc_pos, npcd->r)) {
             check(false, "character not within npc radius");
         }
 

@@ -1,10 +1,18 @@
-## Compilation and Deployment
+### EOS Studio Setup
 
 ```
-eosio-cpp -o CONTRACT_NAME.wasm CONTRACT_NAME.cpp --abigen
+npm run unlock
+npm run seed:accounts
+npm run build:game
+npm run build:admin
+npm run deploy:game
+npm run deploy:admin
+npm run seed
 ```
 
+#### Optional: Seed EOS to Accounts
 ```
-cleos set contract hello data/CONTRACT_FOLDER -P CONTRACT_PROVIDER_ACCOUNT@active
+npm run token:deploy
+npm run token:create
+npm run token:seed
 ```
-

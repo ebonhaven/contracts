@@ -60,6 +60,7 @@ ACTION ebonhaven::spawnitem( name to, name token_name )
   print(inventory_count(to));
   check(inventory_count(to) <= acct.max_inventory - 1, "not enough inventory space");
   auto quantity = asset(1, symbol(symbol_code("EBON"), 0));
+  require_recipient( to );
   action(
     permission_level{ get_self(), name("active") },
     name("ebonhavencom"),
@@ -179,4 +180,36 @@ ACTION ebonhaven::gentreasure( name user, uint64_t character_id )
   characters_index characters( get_self(), user.value );
   auto character = characters.get(character_id, "couldn't find character");
   generate_treasure( user, get_self(), character );
+}
+
+void ebonhaven::buyslot( name from, asset quantity )
+{
+  accounts_index accounts(get_self(), from.value);
+  auto acct = accounts.get(from.value, "cannot find account");
+  map<uint8_t, asset> costs{
+    { 1, asset(10000, symbol(symbol_code("EOS"), 4)) },
+    { 2, asset(50000, symbol(symbol_code("EOS"), 4)) },
+    { 3, asset(120000, symbol(symbol_code("EOS"), 4)) },
+    { 4, asset(250000, symbol(symbol_code("EOS"), 4)) }
+  };
+  auto c_itr = costs.find(acct.max_characters);
+  if ( c_itr != costs.end() ) {
+    asset cost = c_itr->second;
+    check ( quantity.amount == cost.amount, "send the correct amount");
+  } else {
+    check( false, "cannot find cost to add slot");
+  }
+
+  if ( from != get_self() ) {
+      // send EOS to account owed
+      action( permission_level{ get_self(), name("active") },
+              name("eosio.token"), name("transfer"),
+              make_tuple( get_self(), DAC_CONTRACT, quantity, string("purchase character slot") ) ).send();
+  }
+
+  require_recipient( from );
+  auto a_itr = accounts.find(from.value);
+  accounts.modify( a_itr, same_payer, [&](auto& a) {
+    a.max_characters = a.max_characters + 1;
+  });
 }

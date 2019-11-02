@@ -170,6 +170,7 @@ ACTION admin::upsresource( name resource_name,
                            uint8_t  profession_id,
                            uint32_t experience,
                            uint32_t min_skill,
+                           uint32_t max_skill,
                            vector<resource_drop> drops )
 {
   require_auth( get_self() );
@@ -212,7 +213,8 @@ ACTION admin::upstreasure( uint64_t world_zone_id, vector<item_drop> drops ) {
   }
 }
 
-ACTION admin::upsmapdata( uint64_t world_zone_id,
+ACTION admin::upsmapdata( uint64_t mapdata_id,
+                          uint64_t world_zone_id,
                           position respawn,
                           vector<tiledata> tiles,
                           vector<trigger> triggers,
@@ -226,8 +228,8 @@ ACTION admin::upsmapdata( uint64_t world_zone_id,
   vector<tiledata> updated_tiles;
   for (auto& ti: tiles) {
     tiledata new_tile {
-      ti.coordinates,
-      ti.attributes
+      ti.c,
+      ti.a
     };
     updated_tiles.push_back(new_tile);
   }
@@ -235,9 +237,9 @@ ACTION admin::upsmapdata( uint64_t world_zone_id,
   vector<trigger> updated_triggers;
   for (auto& tr: triggers) {
     trigger new_trigger {
-      tr.coordinates,
-      tr.radius,
-      tr.attributes
+      tr.c,
+      tr.r,
+      tr.a
     };
     updated_triggers.push_back(new_trigger);
   }
@@ -245,11 +247,11 @@ ACTION admin::upsmapdata( uint64_t world_zone_id,
   vector<mobdata> updated_mobs;
   for (auto& m: mobs) {
     mobdata new_mob {
-      m.coordinates,
+      m.c,
       m.mob_id,
       m.status,
-      m.radius,
-      m.attributes
+      m.r,
+      m.a
     };
     updated_mobs.push_back(new_mob);
   }
@@ -257,10 +259,10 @@ ACTION admin::upsmapdata( uint64_t world_zone_id,
   vector<npcdata> updated_npcs;
   for (auto& n: npcs) {
     npcdata new_npc {
-      n.coordinates,
+      n.c,
       n.npc_id,
-      n.radius,
-      n.attributes
+      n.r,
+      n.a
     };
     updated_npcs.push_back(new_npc);
   }
@@ -284,9 +286,10 @@ ACTION admin::upsmapdata( uint64_t world_zone_id,
   };
 
   mapdata_index mapdata(get_self(), get_self().value);
-  auto itr = mapdata.find(world_zone_id);
+  auto itr = mapdata.find(mapdata_id);
   if ( itr == mapdata.end() ) {
     mapdata.emplace( get_self(), [&](auto& m) {
+      m.mapdata_id = mapdata_id;
       m.world_zone_id = world_zone_id;
       m.respawn = respawn;
       m.tiles = updated_tiles;
@@ -320,9 +323,16 @@ ACTION admin::upsmob( uint32_t mob_id,
                       uint32_t hp,
                       uint32_t experience,
                       asset    worth,
-                      uint64_t drop_id )
+                      uint64_t drop_id,
+                      bribe_drop bribe )
 {
   require_auth( get_self() );
+
+  bribe_drop updated_bribe {
+    bribe.percentage,
+    bribe.amount,
+    bribe.drop_id
+  };
 
   mobs_index mobs(get_self(), get_self().value);
   auto itr = mobs.find(mob_id); 
@@ -341,6 +351,7 @@ ACTION admin::upsmob( uint32_t mob_id,
       m.experience = experience;
       m.worth = worth;
       m.drop_id = drop_id;
+      m.bribe = updated_bribe;
     });
   } else {
     mobs.modify( itr, get_self(), [&]( auto& m ) {
@@ -356,6 +367,7 @@ ACTION admin::upsmob( uint32_t mob_id,
       m.experience = experience;
       m.worth = worth;
       m.drop_id = drop_id;
+      m.bribe = updated_bribe;
     });
   }
 };
@@ -405,6 +417,7 @@ ACTION admin::upsrecipe( uint64_t recipe_id,
                          name token_name,
                          uint8_t profession_lock,
                          uint32_t min_skill,
+                         uint32_t max_skill,
                          vector<requirement> requirements )
 {
   require_auth(get_self());
@@ -426,6 +439,7 @@ ACTION admin::upsrecipe( uint64_t recipe_id,
       r.token_name = token_name;
       r.profession_lock = profession_lock;
       r.min_skill = min_skill;
+      r.max_skill = max_skill;
       r.requirements = updated_requirements;
     });
   } else {
@@ -435,6 +449,7 @@ ACTION admin::upsrecipe( uint64_t recipe_id,
       r.token_name = token_name;
       r.profession_lock = profession_lock;
       r.min_skill = min_skill;
+      r.max_skill = max_skill;
       r.requirements = updated_requirements;
     });
   }

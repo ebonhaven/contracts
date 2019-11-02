@@ -70,7 +70,8 @@ namespace types {
     ITEMEFFECT = 2,
     LEARNABILITY = 3,
     LEARNRECIPE = 4,
-    DROPREWARD = 5
+    DROPREWARD = 5,
+    EXPANDINVENTORY = 6
   };
   
   enum class mob_type: uint8_t {
@@ -90,6 +91,10 @@ namespace types {
     ESCORT = 4,
     REPUTATION = 5,
     EXPLORATION = 6
+  };
+
+  enum class permission_type: uint8_t {
+    TRANSFER = 0
   };
   
   struct attack {
@@ -167,6 +172,12 @@ namespace types {
     float_t percentage = 0.00;
     name    token_name;
   };
+
+  struct bribe_drop {
+    float_t percentage = 0.00;
+    asset amount = asset(0, symbol(symbol_code("EBON"),2));
+    uint64_t drop_id = 0;
+  };
   
   struct resource_drop {
     float_t percentage = 0.00;
@@ -199,7 +210,6 @@ namespace types {
     uint64_t legs;
     uint64_t feet;
     uint64_t weapon;
-    uint64_t ranged;
     uint64_t ring1;
     uint64_t ring2;
     uint64_t trinket1;
@@ -212,29 +222,29 @@ namespace types {
   };
   
   struct tiledata {
-    coords coordinates;
-    string attributes;
+    coords c;
+    string a;
   };
   
   struct trigger {
-    coords coordinates;
-    float_t radius;
-    string attributes;
+    coords c;
+    float_t r;
+    string a;
   };
   
   struct mobdata {
-    coords coordinates;
+    coords c;
     uint64_t mob_id;
     uint8_t status;
-    float_t radius;
-    string attributes;
+    float_t r;
+    string a;
   };
   
   struct npcdata {
-    coords coordinates;
+    coords c;
     uint64_t npc_id;
-    float_t radius;
-    string attributes;
+    float_t r;
+    string a;
   };
 
   struct requirement {
@@ -247,6 +257,27 @@ namespace types {
     uint8_t  objective_type = 0;
     uint8_t  completed = 0;
     string   objective_data;
+  };
+
+  struct raw_transfer {
+    name   from;
+    name   to;
+    asset  quantity;
+    string memo; 
+  };
+
+  struct transfer_action {
+    name     from;
+    string   action;
+    string   param;
+    uint64_t id;
+    name     recipient;
+    asset    quantity;
+  };
+
+  struct permission {
+    uint8_t type;
+    bool    permitted = false;
   };
   
 }

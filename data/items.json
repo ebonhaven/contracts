@@ -112,7 +112,7 @@
       "burnable": true,
       "sellable": true,
       "transferable": true,
-      "rev_split": 0.1,
+      "rev_split": 0.2,
       "attributes": {
         "item_name": "Recipe: Meat Cleaver",
         "item_description": "",
@@ -126,6 +126,32 @@
         "repair_cost": "0.00 EBON",
         "auras": [],
         "effects": [3001]
+      },
+      "base_uri": "http://www.google.com",
+      "max_supply": "2000 EBON"
+    },
+    {
+      "rev_partner": "ebonhavendac",
+      "category": "ebonhavencom",
+      "token_name": "recipe2",
+      "fungible": false,
+      "burnable": true,
+      "sellable": true,
+      "transferable": true,
+      "rev_split": 0.2,
+      "attributes": {
+        "item_name": "Lesser Magic Bag",
+        "item_description": "Expands inventory from 16 to 24",
+        "item_binding": 0,
+        "level_requirement": 1,
+        "quality": 3,
+        "slot": 0,
+        "item_type": 8,
+        "profession_lock": 0,
+        "max_durability": 0,
+        "repair_cost": "0.00 EBON",
+        "auras": [],
+        "effects": [9901]
       },
       "base_uri": "http://www.google.com",
       "max_supply": "2000 EBON"

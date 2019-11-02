@@ -140,6 +140,10 @@ ACTION ebonhaven::transfernft( name from,
   accounts_index accounts_table( get_self(), to.value );
   auto acct = accounts_table.get(to.value, "account not found");
 
+  contacts_index contacts( get_self(), to.value );
+  auto from_contact = contacts.get(from.value, "sender not found in recipient contacts");
+  check( from_contact.can_transfer(), "transfer not permitted by recipient" );
+
   // check memo size
   check( memo.size() <= 256, "memo has more than 256 bytes" );
 
@@ -197,6 +201,7 @@ ACTION ebonhaven::listsalenft( name seller,
   for ( auto const& dgood_id: dgood_ids ) {
     const auto& token = dgood_table.get( dgood_id, "token does not exist" );
     check( token.equipped == 0, "cannot list equipped items");
+    check( token.attributes.bind_status != 2, "cannot list bound items");
 
     stats_index stats_table( get_self(), token.category.value );
     const auto& dgood_stats = stats_table.get( token.token_name.value, "dgood stats not found" );
@@ -254,28 +259,21 @@ ACTION ebonhaven::closesalenft( name seller,
 }
 
 void ebonhaven::buynft( name from,
-                        name to,
-                        asset quantity,
-                        string memo )
+                        name to_account,
+                        uint64_t batch_id,
+                        asset quantity )
 {
-    // allow EOS to be sent by sending with empty string memo
-    if ( memo == "deposit" ) return;
-    // don't allow spoofs
-    if ( to != get_self() ) return;
-    if ( from == name("eosio.stake") ) return;
-    check( quantity.symbol == symbol( symbol_code("EOS"), 4), "Buy only with EOS" );
-    check( memo.length() <= 32, "memo too long" );
-
-    //memo format comma separated
-    //batch_id,to_account
-    uint64_t batch_id;
-    name to_account;
-    tie( batch_id, to_account ) = parsememo(memo);
-
     asks_index ask_table( get_self(), get_self().value );
     const auto& ask = ask_table.get( batch_id, "cannot find listing" );
     check( ask.amount.amount == quantity.amount, "send the correct amount" );
     check( ask.expiration > time_point_sec(current_time_point()), "sale has expired" );
+
+    // if not buying for self, check if permitted
+    if ( from != to_account ) {
+      contacts_index contacts( get_self(), to_account.value );
+      auto from_contact = contacts.get(from.value, "sender not found in recipient contacts");
+      check( from_contact.can_transfer(), "transfer not permitted by recipient" );
+    }
 
     // nft(s) bought, change owner to buyer regardless of transferable
     _changeowner( ask.seller, to_account, ask.dgood_ids, "bought by: " + to_account.to_string(), false );
@@ -283,24 +281,24 @@ void ebonhaven::buynft( name from,
     // amounts owed to all parties
     map<name, asset> fee_map = _calcfees(ask.dgood_ids, ask.amount, ask.seller);
     for(auto const& fee : fee_map) {
-        auto account = fee.first;
-        auto amount = fee.second;
+      auto account = fee.first;
+      auto amount = fee.second;
 
-        // if seller is contract, no need to send EOS again
-        if ( account != get_self() ) {
-            // send EOS to account owed
-            action( permission_level{ get_self(), name("active") },
-                    name("eosio.token"), name("transfer"),
-                    make_tuple( get_self(), account, amount, string("sale of dgood") ) ).send();
-        }
+      // if seller is contract, no need to send EOS again
+      if ( account != get_self() ) {
+        // send EOS to account owed
+        action( permission_level{ get_self(), name("active") },
+                name("eosio.token"), name("transfer"),
+                make_tuple( get_self(), account, amount, string("sale of dgood") ) ).send();
+      }
     }
 
     // remove locks, remove from ask table
     lock_index lock_table( get_self(), get_self().value );
 
     for ( auto const& dgood_id: ask.dgood_ids ) {
-        const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
-        lock_table.erase( locked_nft );
+      const auto& locked_nft = lock_table.get( dgood_id, "dgood not found in lock table" );
+      lock_table.erase( locked_nft );
     }
     // remove sale listing
     ask_table.erase( ask );
@@ -358,6 +356,8 @@ void ebonhaven::_changeowner(name from, name to, vector<uint64_t> dgood_ids, str
     if ( istransfer ) {
       check( token.owner == from, "must be token owner" );
       check( dgood_stats.transferable == true, "not transferable");
+      check( token.equipped != 1, "cannot transfer equipped items");
+      check( token.attributes.bind_status != 2, "cannot transfer bound items");
       auto locked_nft = lock_table.find( dgood_id );
       check( locked_nft == lock_table.end(), "token locked, cannot transfer");
     }
@@ -388,7 +388,6 @@ void ebonhaven::_checkasset( asset amount, bool fungible ) {
   globals_index config_table(get_self(), get_self().value);
   auto config_singleton = config_table.get();
   check( config_singleton.symbol.raw() == sym.code().raw(), "symbol must match symbol in config" );
-  check( amount.is_valid(), "invalid amount" );
 }
 
 void ebonhaven::_mint(name to,

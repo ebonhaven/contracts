@@ -9,6 +9,9 @@
 #include "skills.cpp"
 #include "token.cpp"
 
+using namespace eosio;
+using namespace utility;
+
 // Admin
 ACTION ebonhaven::setconfig(string version)
 {
@@ -27,6 +30,32 @@ ACTION ebonhaven::setconfig(string version)
   globals_table.set(global_singleton, get_self());
 }
 
+
+void ebonhaven::transfer( uint64_t sender, uint64_t receiver )
+{
+  auto transfer_data = unpack_action_data<raw_transfer>();
+  if ( transfer_data.memo == "deposit" ) return;
+  if ( transfer_data.to != get_self() ) return;
+  if ( transfer_data.from == name("eosio.stake") ) return;
+  check( transfer_data.quantity.symbol == symbol( symbol_code("EOS"), 4), "can buy only with EOS" );
+  check( transfer_data.quantity.amount > 0, "quantity must be positive");
+  
+  // action:id:recipient
+  transfer_action ta = parsetransfer(transfer_data);
+  accounts_index accounts( get_self(), name(ta.from).value );
+  auto a_itr = accounts.find( name(ta.from).value );
+  check( a_itr != accounts.end(), "account not found" );
+
+  if (ta.action.size() == 0) {
+    return;
+  } else if (ta.action == "buynft") {
+    buynft( ta.from, ta.recipient, ta.id, ta.quantity );
+  } else if (ta.action == "buyslot") {
+    buyslot( ta.from, ta.quantity );
+  }
+
+}
+
 extern "C" {
   void apply( uint64_t receiver, uint64_t code, uint64_t action ) {
     auto self = receiver;
@@ -34,6 +63,8 @@ extern "C" {
       switch( action ) {
         EOSIO_DISPATCH_HELPER(ebonhaven, 
           (newaccount)
+          (newcontact)
+          (delcontact)
           (newcharacter)
           (delcharacter)
           (move)
@@ -74,7 +105,7 @@ extern "C" {
       }
     } 
     else if ( code == name("eosio.token").value && action == name("transfer").value ) {
-      execute_action( name(receiver), name(code), &ebonhaven::buynft );
+      execute_action( name(receiver), name(code), &ebonhaven::transfer );
     }
   }
 }
